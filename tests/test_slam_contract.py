@@ -17,6 +17,7 @@ def test_fast_lio_matches_simulated_velodyne_and_imu():
     """Catches a FAST-LIO2 config that cannot consume SW01's sensor contract."""
     p = ros_params(FAST_LIO)
 
+    assert p["use_sim_time"] is True
     assert p["feature_extract_enable"] is False
     assert p["point_filter_num"] == 4
     assert p["max_iteration"] == 3
