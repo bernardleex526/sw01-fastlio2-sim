@@ -17,7 +17,10 @@ def generate_launch_description():
     default_world = os.path.join(gazebo_package_share, "worlds", "sw01_maze.world")
     # 来源：sw01_description 的仿真 Xacro；robot_description 是生成实体与状态发布器的共同输入。
     xacro_file = os.path.join(description_share, "urdf", "sw01_sim.urdf.xacro")
-    robot_description = Command([FindExecutable(name="xacro"), " ", xacro_file])
+    # 含空格的安装路径必须保留成单个 shell 实参，因此在 Xacro 文件路径两侧显式拼接成对引号。
+    robot_description = Command(
+        [FindExecutable(name="xacro"), ' "', xacro_file, '"']
+    )
 
     world = LaunchConfiguration("world")
     x = LaunchConfiguration("x")

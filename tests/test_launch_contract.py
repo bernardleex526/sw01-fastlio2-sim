@@ -20,6 +20,30 @@ def test_launch_files_are_valid_python_and_export_generate_launch_description():
         assert "def generate_launch_description" in source
 
 
+def test_simulation_quotes_the_xacro_path_as_one_shell_argument():
+    """Catches shlex splitting an installed Xacro path that contains spaces."""
+    tree = ast.parse(LAUNCHES["simulation"].read_text(encoding="utf-8"))
+    assignment = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "robot_description"
+            for target in node.targets
+        )
+    )
+    command = assignment.value
+
+    assert isinstance(command, ast.Call)
+    assert isinstance(command.func, ast.Name) and command.func.id == "Command"
+    assert len(command.args) == 1 and isinstance(command.args[0], ast.List)
+    parts = command.args[0].elts
+    assert len(parts) == 4
+    assert isinstance(parts[1], ast.Constant) and parts[1].value == ' "'
+    assert isinstance(parts[2], ast.Name) and parts[2].id == "xacro_file"
+    assert isinstance(parts[3], ast.Constant) and parts[3].value == '"'
+
+
 def test_runtime_ownership_is_unambiguous():
     """Catches duplicate owners or a disconnected simulation/SLAM/Nav2 graph."""
     simulation = LAUNCHES["simulation"].read_text(encoding="utf-8")
