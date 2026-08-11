@@ -156,6 +156,13 @@ def test_velodyne_sensor_and_plugin_use_35_meter_maximum_range():
     assert velodyne_plugin.findtext("max_range") == "35.0"
 
 
+def test_velodyne_discards_invalid_rays_before_fast_lio_time_synthesis():
+    """Catches NaN placeholders reaching FAST-LIO2's per-ring first-point logic."""
+    xml = URDF.read_text(encoding="utf-8")
+
+    assert "<organize_cloud>false</organize_cloud>" in xml
+
+
 def test_meshes_match_audited_size_and_sha256():
     assert {path.name for path in MESHES.glob("*.STL")} == set(EXPECTED_MESHES)
     for filename, (expected_size, expected_sha256) in EXPECTED_MESHES.items():

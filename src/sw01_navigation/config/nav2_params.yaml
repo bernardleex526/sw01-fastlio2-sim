@@ -179,19 +179,16 @@ velocity_smoother:
     deadband_velocity: [0.0, 0.0, 0.0]  # 来源：仿真无机械死区，x、y、theta 三轴均不附加死区。
     velocity_timeout: 1.0  # 来源：导航速度指令失联后的安全停机窗口，单位 s。
 
-lifecycle_manager:
+smoother_server:
   ros__parameters:
-    use_sim_time: true  # 来源：Gazebo 发布 /clock，生命周期协调器与被管理节点使用同一仿真时钟。
-    autostart: true  # 来源：仿真启动后自动配置并激活完整导航服务器集合。
-    bond_timeout: 4.0  # 来源：Navigation2 Humble 生命周期管理器默认 bond 看门狗超时，单位 s。
-    # 来源：本配置实际启动的生命周期服务器；costmap 由 controller/planner server 内部管理，不单独列出。
-    node_names:
-      - controller_server
-      - planner_server
-      - behavior_server
-      - bt_navigator
-      - waypoint_follower
-      - velocity_smoother
+    use_sim_time: true  # 来源：Gazebo 发布 /clock，路径平滑服务器统一使用仿真时钟。
+    # 来源：Navigation2 Humble 官方 nav2_params.yaml 的 SimpleSmoother 完整基线；navigation_launch.py 会启动并管理该服务器。
+    smoother_plugins: ["simple_smoother"]
+    simple_smoother:
+      plugin: "nav2_smoother::SimpleSmoother"
+      tolerance: 1.0e-10
+      max_its: 1000
+      do_refinement: true
 
 local_costmap:
   local_costmap:

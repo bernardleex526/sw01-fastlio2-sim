@@ -14,14 +14,6 @@ FOOTPRINT = [
     [0.0, -0.27],
     [0.325, -0.19],
 ]
-LIFECYCLE_NODES = [
-    "controller_server",
-    "planner_server",
-    "behavior_server",
-    "bt_navigator",
-    "waypoint_follower",
-    "velocity_smoother",
-]
 HUMBLE_BT_PLUGIN_LIBS = [
     "nav2_compute_path_to_pose_action_bt_node",
     "nav2_compute_path_through_poses_action_bt_node",
@@ -144,6 +136,7 @@ def test_all_nav2_nodes_use_sim_time_and_smoother_uses_fast_lio_odometry():
         "bt_navigator": data["bt_navigator"]["ros__parameters"],
         "behavior_server": data["behavior_server"]["ros__parameters"],
         "waypoint_follower": data["waypoint_follower"]["ros__parameters"],
+        "smoother_server": data["smoother_server"]["ros__parameters"],
         "velocity_smoother": data["velocity_smoother"]["ros__parameters"],
         "local_costmap": data["local_costmap"]["local_costmap"]["ros__parameters"],
         "global_costmap": data["global_costmap"]["global_costmap"]["ros__parameters"],
@@ -156,14 +149,23 @@ def test_all_nav2_nodes_use_sim_time_and_smoother_uses_fast_lio_odometry():
     assert smoother["odom_topic"] == "/Odometry"
 
 
-def test_lifecycle_manager_autostarts_actual_navigation_servers():
-    """Catches lifecycle bringup that omits servers or manages internal costmaps."""
-    lifecycle = load_yaml(NAV2)["lifecycle_manager"]["ros__parameters"]
+def test_smoother_server_has_complete_humble_simple_smoother_configuration():
+    """Catches the launched path smoother lacking its Humble plugin parameters."""
+    smoother = load_yaml(NAV2)["smoother_server"]["ros__parameters"]
 
-    assert lifecycle["use_sim_time"] is True
-    assert lifecycle["autostart"] is True
-    assert 0.0 < lifecycle["bond_timeout"] <= 10.0
-    assert lifecycle["node_names"] == LIFECYCLE_NODES
+    assert smoother["use_sim_time"] is True
+    assert smoother["smoother_plugins"] == ["simple_smoother"]
+    assert smoother["simple_smoother"] == {
+        "plugin": "nav2_smoother::SimpleSmoother",
+        "tolerance": 1.0e-10,
+        "max_its": 1000,
+        "do_refinement": True,
+    }
+
+
+def test_navigation_params_do_not_claim_ownership_of_the_launch_lifecycle_manager():
+    """Catches a dead YAML root that navigation_launch.py never passes to its manager."""
+    assert "lifecycle_manager" not in load_yaml(NAV2)
 
 
 def test_humble_bt_navigator_loads_standard_navigation_plugins():

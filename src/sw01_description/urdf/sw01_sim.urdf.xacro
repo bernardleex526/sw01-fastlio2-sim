@@ -418,7 +418,8 @@
   <!--
     Velodyne 参数源自 FAST-LIO2 的 VELO16 输入契约：话题 /velodyne_points，坐标系 lidar_link。
     10 Hz、900×16 采样、水平 ±π、垂直 ±0.261799 rad、0.30～35.0 m 量程及 0.01 m 高斯噪声均为审定仿真值；
-    organize_cloud 用于保留有序点云和 ring 信息。
+    Humble velodyne_gazebo_plugins 的 organize_cloud=false 会剔除无效射线，同时为有效点保留 x/y/z/intensity/ring/time 字段；
+    这可避免有序点云的 NaN 占位污染本地 FAST-LIO2 在有限值过滤前执行的逐 ring 首点时间合成。
   -->
   <gazebo reference="lidar_link">
     <sensor name="sw01_velodyne" type="ray">
@@ -445,7 +446,7 @@
         <frameName>lidar_link</frameName>
         <min_range>0.30</min_range><max_range>35.0</max_range>
         <gaussianNoise>0.01</gaussianNoise>
-        <organize_cloud>true</organize_cloud>
+        <organize_cloud>false</organize_cloud>
       </plugin>
     </sensor>
   </gazebo>

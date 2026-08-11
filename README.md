@@ -437,13 +437,14 @@ ros2 run tf2_tools view_frames
 
 ros2 lifecycle get /planner_server
 ros2 lifecycle get /controller_server
+ros2 lifecycle get /smoother_server
 ros2 lifecycle get /behavior_server
 ros2 lifecycle get /bt_navigator
 ros2 lifecycle get /waypoint_follower
 ros2 lifecycle get /velocity_smoother
 ```
 
-`planner_server` 和 `controller_server` 至少必须是 `active`；完整导航还要求其余 Nav2 lifecycle servers 为 `active`。
+生命周期由官方 `navigation_launch.py` 创建的 `lifecycle_manager_navigation` 统一拥有；其管理列表为 `controller_server`、`smoother_server`、`planner_server`、`behavior_server`、`bt_navigator`、`waypoint_follower`、`velocity_smoother`。`planner_server` 和 `controller_server` 至少必须是 `active`；完整导航还要求其余 Nav2 lifecycle servers 为 `active`。
 
 ### 11.3 描述、world 与静态测试
 
@@ -479,6 +480,7 @@ ros2 param get /robot_state_publisher use_sim_time
 ros2 param get /laser_mapping use_sim_time
 ros2 param get /slam_toolbox use_sim_time
 ros2 param get /planner_server use_sim_time
+ros2 param get /smoother_server use_sim_time
 ```
 
 若 Gazebo pause，`/clock` 也会停。节点名以 `ros2 node list` 的实际结果为准；如果 FAST-LIO2 节点名不是 `/laser_mapping`，对实际名称执行 `ros2 param get`。
