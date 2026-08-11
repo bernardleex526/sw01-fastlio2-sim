@@ -146,6 +146,16 @@ def test_gazebo_plugins_match_topic_and_rate_contract():
     assert "<publish_odom_tf>false</publish_odom_tf>" in xml
 
 
+def test_velodyne_sensor_and_plugin_use_35_meter_maximum_range():
+    root = parse_xml(URDF)
+    ray_sensor = root.find(".//sensor[@type='ray']")
+    velodyne_plugin = root.find(
+        ".//plugin[@filename='libgazebo_ros_velodyne_laser.so']"
+    )
+    assert ray_sensor.findtext("ray/range/max") == "35.0"
+    assert velodyne_plugin.findtext("max_range") == "35.0"
+
+
 def test_meshes_match_audited_size_and_sha256():
     assert {path.name for path in MESHES.glob("*.STL")} == set(EXPECTED_MESHES)
     for filename, (expected_size, expected_sha256) in EXPECTED_MESHES.items():
