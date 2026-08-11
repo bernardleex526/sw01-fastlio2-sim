@@ -1,0 +1,29 @@
+slam_toolbox:
+  ros__parameters:
+    use_sim_time: true  # 来源：Gazebo /clock，所有在线建图节点必须使用仿真时间。
+    mode: mapping  # 来源：本任务为在线异步建图，不加载既有地图定位。
+    map_frame: map  # 来源：全局导航坐标系；slam_toolbox 发布 map -> camera_init。
+    odom_frame: camera_init  # 来源：FAST-LIO2 发布的里程计参考坐标系。
+    base_frame: body  # 来源：FAST-LIO2 发布 camera_init -> body；body 不是 URDF 链接。
+    scan_topic: /scan  # 来源：Task 6 的 pointcloud_to_laserscan 将 /cloud_registered 投影到此话题。
+    resolution: 0.05  # 来源：30 m 迷宫导航栅格分辨率，单位 m/格。
+    max_laser_range: 30.0  # 来源：迷宫最大有效观测距离，单位 m。
+    minimum_time_interval: 0.10  # 来源：Velodyne 10 Hz，最多每帧接受一次扫描。
+    transform_publish_period: 0.02  # 来源：50 Hz TF 发布频率，单位 s。
+    map_update_interval: 1.0  # 来源：在线 RViz/Nav2 地图每秒更新一次，单位 s。
+    transform_timeout: 0.20  # 来源：仿真 TF 缓冲等待上限，单位 s。
+    tf_buffer_duration: 30.0  # 来源：覆盖迷宫内回环匹配的 TF 历史，单位 s。
+    throttle_scans: 1  # 来源：Velodyne 10 Hz 输入；不丢弃任何投影扫描。
+    use_scan_matching: true  # 来源：需要利用连续 /scan 与 FAST-LIO2 里程计进行二维匹配。
+    use_scan_barycenter: true
+    minimum_travel_distance: 0.20  # 来源：0.05 m 栅格下的建图更新位移阈值，单位 m。
+    minimum_travel_heading: 0.10  # 来源：建图更新的最小航向变化，单位 rad。
+    do_loop_closing: true  # 来源：30 m 迷宫回环路径需要闭环优化。
+    loop_search_maximum_distance: 8.0  # 来源：迷宫走廊尺度下的候选闭环搜索半径，单位 m。
+    loop_match_minimum_chain_size: 10  # 来源：slam_toolbox 在线回环的最小扫描链长度。
+    loop_match_maximum_variance_coarse: 3.0  # 来源：slam_toolbox 粗匹配默认方差上限。
+    loop_match_minimum_response_coarse: 0.35  # 来源：slam_toolbox 粗匹配响应阈值。
+    loop_match_minimum_response_fine: 0.45  # 来源：slam_toolbox 精匹配响应阈值。
+    correlation_search_space_dimension: 0.50  # 来源：二维扫描匹配局部平移搜索范围，单位 m。
+    correlation_search_space_resolution: 0.01  # 来源：二维扫描匹配平移步长，单位 m。
+    correlation_search_space_smear_deviation: 0.10  # 来源：二维扫描匹配相关性平滑尺度，单位 m。

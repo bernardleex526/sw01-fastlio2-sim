@@ -1,0 +1,44 @@
+/**:
+  ros__parameters:
+    feature_extract_enable: false
+    point_filter_num: 4  # 来源：FAST-LIO2 Velodyne 基线配置的每 4 点下采样。
+    max_iteration: 3  # 来源：FAST-LIO2 Velodyne 基线配置的 IEKF 最大迭代次数。
+    filter_size_surf: 0.10  # 仿真迷宫的局部平面体素尺寸，兼顾 10 Hz Velodyne 点密度与实时性。
+    filter_size_map: 0.20  # 仿真迷宫的全局地图体素尺寸，抑制累积点云的内存增长。
+    cube_side_length: 1000.0  # FAST-LIO2 局部立方体边长；覆盖 30 m 仿真迷宫且避免频繁滑窗。
+    runtime_pos_log_enable: false
+    map_file_path: "./test.pcd"
+
+    common:
+      lid_topic: "/velodyne_points"  # 来源：sw01_sim.urdf.xacro 的 Velodyne Gazebo 插件输出。
+      imu_topic: "/imu/data"  # 来源：sw01_sim.urdf.xacro 的 IMU Gazebo 插件输出。
+      time_sync_en: false  # Gazebo 使用同一仿真时钟，不需要外部时间同步。
+      time_offset_lidar_to_imu: 0.0  # 同源 Gazebo 时间戳的 LiDAR-IMU 偏移，单位秒。
+
+    preprocess:
+      lidar_type: 2  # 来源：FAST-LIO2 velodyne.yaml，2 表示 Velodyne PointCloud2。
+      scan_line: 16  # 来源：SW01 Velodyne 传感器垂直 16 线配置。
+      scan_rate: 10  # 来源：SW01 Velodyne Gazebo 插件 10 Hz 更新频率。
+      timestamp_unit: 2  # 来源：FAST-LIO2 Velodyne 配置；PointCloud2 时间字段单位为微秒。
+      blind: 0.30  # 来源：SW01 Velodyne 最小量程 0.30 m，近距点应过滤。
+
+    mapping:
+      acc_cov: 0.1  # 来源：FAST-LIO2 Velodyne 基线配置的加速度测量协方差。
+      gyr_cov: 0.1  # 来源：FAST-LIO2 Velodyne 基线配置的陀螺仪测量协方差。
+      b_acc_cov: 0.0001  # 来源：FAST-LIO2 Velodyne 基线配置的加速度偏置协方差。
+      b_gyr_cov: 0.0001  # 来源：FAST-LIO2 Velodyne 基线配置的陀螺仪偏置协方差。
+      fov_degree: 360.0  # 来源：SW01 Velodyne 水平全周视场角，单位度。
+      det_range: 35.0  # 来源：30 m 迷宫对角观测需求，略大于环境尺度。
+      extrinsic_est_en: false  # 来源：URDF 已固定 imu_link 与 lidar_link 的物理外参，不在线估计。
+      extrinsic_T: [-0.0865429535, 0.0050846333, 0.463075705]  # 来源：lidar_link 到 imu_link 的 URDF 固定坐标差，单位 m。
+      extrinsic_R: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]  # 来源：SW01 传感器安装坐标轴与 IMU 轴平行。
+
+    publish:
+      path_en: true  # 来源：RViz 需要 FAST-LIO2 /path 轨迹。
+      scan_publish_en: true  # 来源：点云投影节点需要 /cloud_registered 输入。
+      dense_publish_en: true  # 来源：2D 投影需要完整点云密度。
+      scan_bodyframe_pub_en: true  # 来源：点云投影目标坐标系为 FAST-LIO2 body。
+
+    pcd_save:
+      pcd_save_en: false  # 来源：在线仿真仅由 slam_toolbox 保存二维地图，避免 PCD 持续写盘。
+      interval: -1  # 来源：FAST-LIO2 约定；禁用保存时仍保持默认全帧分组值。
