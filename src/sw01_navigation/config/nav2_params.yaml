@@ -1,0 +1,202 @@
+planner_server:
+  ros__parameters:
+    use_sim_time: true  # 来源：Gazebo 发布 /clock，导航节点统一使用仿真时钟。
+    expected_planner_frequency: 5.0  # 来源：30 m 迷宫的全局路径低频重规划需求，单位 Hz。
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_smac_planner/SmacPlanner2D"
+      tolerance: 0.25  # 来源：任务规定的全局规划终点容差，单位 m。
+      allow_unknown: true
+      downsample_costmap: false
+
+controller_server:
+  ros__parameters:
+    use_sim_time: true  # 来源：Gazebo 发布 /clock，控制节点统一使用仿真时钟。
+    controller_frequency: 20.0  # 来源：迷宫内平面速度闭环的 Nav2 控制频率，单位 Hz。
+    min_x_velocity_threshold: 0.001  # 来源：Nav2 DWB 基线阈值，用于滤除 x 向数值噪声，单位 m/s。
+    min_y_velocity_threshold: 0.001  # 来源：轮足式全向底盘保留 y 向微速能力，单位 m/s。
+    min_theta_velocity_threshold: 0.001  # 来源：Nav2 DWB 基线阈值，用于滤除角速度数值噪声，单位 rad/s。
+    progress_checker_plugin: "progress_checker"
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.25  # 来源：与任务规定的 0.25 m 到点容差对齐，单位 m。
+      movement_time_allowance: 10.0  # 来源：低速穿越迷宫窄通道时允许的进展观察窗口，单位 s。
+
+    general_goal_checker:
+      stateful: true
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.25  # 来源：任务规定的平面位置到点容差，单位 m。
+      yaw_goal_tolerance: 0.25  # 来源：任务规定的航向到点容差，单位 rad。
+
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: false
+      min_vel_x: -0.25  # 来源：任务规定的轮足式底盘 x 向倒车下限，单位 m/s。
+      max_vel_x: 0.80  # 来源：任务规定的轮足式底盘 x 向前进上限，单位 m/s。
+      min_vel_y: -0.40  # 来源：任务规定的全向底盘 y 向右移下限，单位 m/s。
+      max_vel_y: 0.40  # 来源：任务规定的全向底盘 y 向左移上限，单位 m/s。
+      max_vel_theta: 1.0  # 来源：任务规定的底盘最大角速度，单位 rad/s。
+      min_speed_xy: 0.0  # 来源：允许底盘原地旋转，平移速度下限为零，单位 m/s。
+      max_speed_xy: 0.80  # 来源：任务规定的最大平面合速度，单位 m/s。
+      min_speed_theta: 0.0  # 来源：允许停止转动，角速度下限为零，单位 rad/s。
+      acc_lim_x: 0.8  # 来源：任务规定的 x 向加速度上限，单位 m/s²。
+      acc_lim_y: 0.8  # 来源：任务规定的 y 向加速度上限，单位 m/s²。
+      acc_lim_theta: 1.5  # 来源：任务规定的角加速度上限，单位 rad/s²。
+      decel_lim_x: -0.8  # 来源：与任务规定 x 向加速度上限对称的制动限值，单位 m/s²。
+      decel_lim_y: -0.8  # 来源：与任务规定 y 向加速度上限对称的制动限值，单位 m/s²。
+      decel_lim_theta: -1.5  # 来源：与任务规定角加速度上限对称的制动限值，单位 rad/s²。
+      vx_samples: 20  # 来源：任务规定的 x 向速度采样数。
+      vy_samples: 15  # 来源：任务规定的 y 向速度采样数，确保评估横移轨迹。
+      vtheta_samples: 20  # 来源：任务规定的角速度采样数。
+      sim_time: 1.7  # 来源：任务规定的 DWB 前向仿真时域，单位 s。
+      linear_granularity: 0.05  # 来源：与代价地图 0.05 m 栅格分辨率一致，单位 m。
+      angular_granularity: 0.025  # 来源：Nav2 DWB 基线角度采样粒度，单位 rad。
+      transform_tolerance: 0.20  # 来源：覆盖仿真传感器与 FAST-LIO2 的 TF 延迟，单位 s。
+      xy_goal_tolerance: 0.25  # 来源：任务规定的平面位置到点容差，单位 m。
+      trans_stopped_velocity: 0.05  # 来源：低于单个 0.05 m 栅格每秒视为平移停止，单位 m/s。
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      BaseObstacle.scale: 0.02  # 来源：Nav2 DWB 基线障碍代价权重。
+      PathAlign.scale: 32.0  # 来源：Nav2 DWB 基线路径朝向权重。
+      PathAlign.forward_point_distance: 0.10  # 来源：两格代价地图分辨率的前视距离，单位 m。
+      GoalAlign.scale: 24.0  # 来源：迷宫窄通道中低于路径朝向项的目标朝向权重。
+      GoalAlign.forward_point_distance: 0.10  # 来源：两格代价地图分辨率的前视距离，单位 m。
+      PathDist.scale: 32.0  # 来源：Nav2 DWB 基线路径距离权重。
+      GoalDist.scale: 24.0  # 来源：Nav2 DWB 基线目标距离权重。
+      RotateToGoal.scale: 32.0  # 来源：Nav2 DWB 基线到点旋转权重。
+      RotateToGoal.slowing_factor: 5.0  # 来源：Nav2 DWB 基线到点减速因子。
+      RotateToGoal.lookahead_time: -1.0  # 来源：Nav2 DWB 约定，负值表示使用完整前向仿真时域。
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: true  # 来源：Gazebo 发布 /clock，行为树节点统一使用仿真时钟。
+    global_frame: "map"  # 来源：slam_toolbox 发布 map -> camera_init，全局导航使用 map 坐标系。
+    robot_base_frame: "base_link"  # 来源：URDF 导航碰撞几何的机器人基座坐标系。
+    odom_topic: "/Odometry"  # 来源：FAST-LIO2 发布的里程计话题。
+    bt_loop_duration: 10  # 来源：Nav2 行为树基线循环周期，单位 ms。
+    default_server_timeout: 20  # 来源：Nav2 行为树基线服务等待上限，单位 ms。
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: true  # 来源：Gazebo 发布 /clock，恢复行为节点统一使用仿真时钟。
+    local_costmap_topic: "local_costmap/costmap_raw"  # 来源：Nav2 本地代价地图节点的原始代价话题。
+    global_costmap_topic: "global_costmap/costmap_raw"  # 来源：Nav2 全局代价地图节点的原始代价话题。
+    local_footprint_topic: "local_costmap/published_footprint"  # 来源：本地代价地图发布的 SW01 实际轮廓话题。
+    global_footprint_topic: "global_costmap/published_footprint"  # 来源：全局代价地图发布的 SW01 实际轮廓话题。
+    cycle_frequency: 10.0  # 来源：Nav2 恢复行为基线执行频率，单位 Hz。
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "wait"]
+    spin:
+      plugin: "nav2_behaviors/Spin"
+    backup:
+      plugin: "nav2_behaviors/BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors/DriveOnHeading"
+    wait:
+      plugin: "nav2_behaviors/Wait"
+    local_frame: "camera_init"  # 来源：FAST-LIO2 的连续里程计参考坐标系，供局部恢复行为使用。
+    global_frame: "map"  # 来源：slam_toolbox 提供的全局地图坐标系。
+    robot_base_frame: "base_link"  # 来源：URDF 导航碰撞几何的机器人基座坐标系。
+    transform_tolerance: 0.20  # 来源：覆盖仿真传感器与 FAST-LIO2 的 TF 延迟，单位 s。
+    simulate_ahead_time: 2.0  # 来源：Nav2 恢复旋转行为基线前向检查时域，单位 s。
+    max_rotational_vel: 1.0  # 来源：任务规定的底盘最大角速度，单位 rad/s。
+    min_rotational_vel: 0.20  # 来源：保证恢复旋转可克服低速控制死区，单位 rad/s。
+    rotational_acc_lim: 1.5  # 来源：任务规定的角加速度上限，单位 rad/s²。
+
+waypoint_follower:
+  ros__parameters:
+    use_sim_time: true  # 来源：Gazebo 发布 /clock，航点节点统一使用仿真时钟。
+    loop_rate: 20  # 来源：与控制服务器 20 Hz 频率对齐，单位 Hz。
+    stop_on_failure: false
+    waypoint_task_executor_plugin: "wait_at_waypoint"
+    wait_at_waypoint:
+      plugin: "nav2_waypoint_follower::WaitAtWaypoint"
+      enabled: true
+      waypoint_pause_duration: 0  # 来源：迷宫巡航航点无需额外停留，单位 ms。
+
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: true  # 来源：Gazebo 发布 /clock，速度平滑节点统一使用仿真时钟。
+    smoothing_frequency: 40.0  # 来源：任务规定的速度平滑输出频率，单位 Hz。
+    scale_velocities: false
+    feedback: "OPEN_LOOP"
+    max_velocity: [0.80, 0.40, 1.0]  # 来源：任务规定的 x、y、theta 最大速度，单位依次为 m/s、m/s、rad/s。
+    min_velocity: [-0.25, -0.40, -1.0]  # 来源：任务规定的 x、y 下限及对称角速度下限，单位依次为 m/s、m/s、rad/s。
+    max_accel: [0.8, 0.8, 1.5]  # 来源：任务规定的 x、y、theta 加速度上限，单位依次为 m/s²、m/s²、rad/s²。
+    max_decel: [-0.8, -0.8, -1.5]  # 来源：与任务规定加速度上限对称的制动限值，单位依次为 m/s²、m/s²、rad/s²。
+    odom_topic: "/Odometry"  # 来源：FAST-LIO2 发布的里程计话题；保留该契约供反馈模式切换使用。
+    odom_duration: 0.10  # 来源：FAST-LIO2 仿真里程计的 10 Hz 观测窗口，单位 s。
+    deadband_velocity: [0.0, 0.0, 0.0]  # 来源：仿真无机械死区，x、y、theta 三轴均不附加死区。
+    velocity_timeout: 1.0  # 来源：导航速度指令失联后的安全停机窗口，单位 s。
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: true  # 来源：Gazebo 发布 /clock，本地代价地图统一使用仿真时钟。
+      update_frequency: 10.0  # 来源：任务规定的本地代价地图更新频率，单位 Hz。
+      publish_frequency: 5.0  # 来源：任务规定的本地代价地图发布频率，单位 Hz。
+      global_frame: "camera_init"  # 来源：FAST-LIO2 连续里程计坐标系，避免局部窗口受 map 校正跳变影响。
+      robot_base_frame: "base_link"  # 来源：URDF 导航碰撞几何的机器人基座坐标系。
+      rolling_window: true
+      width: 6  # 来源：任务规定的局部滚动窗口宽度，单位 m。
+      height: 6  # 来源：任务规定的局部滚动窗口高度，单位 m。
+      resolution: 0.05  # 来源：任务规定并与 slam_toolbox 对齐的栅格分辨率，单位 m/格。
+      # 来源：SW01 实际轮足外廓审计结果；以下八点坐标均以 base_link 为原点，单位 m。
+      footprint: "[[0.46, 0.0], [0.325, 0.19], [0.0, 0.27], [-0.325, 0.19], [-0.46, 0.0], [-0.325, -0.19], [0.0, -0.27], [0.325, -0.19]]"
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: "scan"
+        scan:
+          topic: "/scan"  # 来源：FAST-LIO2 注册点云投影得到的二维 LaserScan 话题。
+          data_type: "LaserScan"
+          marking: true
+          clearing: true
+          obstacle_max_range: 30.0  # 来源：slam_toolbox 采用的迷宫最大有效激光观测距离，单位 m。
+          obstacle_min_range: 0.0  # 来源：投影节点已完成近距过滤，代价地图不再增加最小截断，单位 m。
+          raytrace_max_range: 30.0  # 来源：与有效 /scan 最大观测距离一致的清障射线范围，单位 m。
+          raytrace_min_range: 0.0  # 来源：清障射线从机器人原点开始，单位 m。
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.45  # 来源：任务规定的 SW01 迷宫避障膨胀半径，单位 m。
+        cost_scaling_factor: 3.0  # 来源：任务规定的膨胀代价衰减系数。
+      always_send_full_costmap: true
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: true  # 来源：Gazebo 发布 /clock，全局代价地图统一使用仿真时钟。
+      update_frequency: 1.0  # 来源：与 slam_toolbox 的 1 s 地图更新周期对齐，单位 Hz。
+      publish_frequency: 1.0  # 来源：与全局地图更新频率对齐，单位 Hz。
+      global_frame: "map"  # 来源：slam_toolbox 发布 map -> camera_init，全局代价地图使用 map 坐标系。
+      robot_base_frame: "base_link"  # 来源：URDF 导航碰撞几何的机器人基座坐标系。
+      resolution: 0.05  # 来源：任务规定并与 slam_toolbox 对齐的栅格分辨率，单位 m/格。
+      track_unknown_space: true
+      # 来源：SW01 实际轮足外廓审计结果；以下八点坐标均以 base_link 为原点，单位 m。
+      footprint: "[[0.46, 0.0], [0.325, 0.19], [0.0, 0.27], [-0.325, 0.19], [-0.46, 0.0], [-0.325, -0.19], [0.0, -0.27], [0.325, -0.19]]"
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: "scan"
+        scan:
+          topic: "/scan"  # 来源：FAST-LIO2 注册点云投影得到的二维 LaserScan 话题。
+          data_type: "LaserScan"
+          marking: true
+          clearing: true
+          obstacle_max_range: 30.0  # 来源：slam_toolbox 采用的迷宫最大有效激光观测距离，单位 m。
+          obstacle_min_range: 0.0  # 来源：投影节点已完成近距过滤，代价地图不再增加最小截断，单位 m。
+          raytrace_max_range: 30.0  # 来源：与有效 /scan 最大观测距离一致的清障射线范围，单位 m。
+          raytrace_min_range: 0.0  # 来源：清障射线从机器人原点开始，单位 m。
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.45  # 来源：任务规定的 SW01 迷宫避障膨胀半径，单位 m。
+        cost_scaling_factor: 3.0  # 来源：任务规定的膨胀代价衰减系数。
+      always_send_full_costmap: true
