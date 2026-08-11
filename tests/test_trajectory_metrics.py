@@ -26,13 +26,89 @@ def test_se2_alignment_and_ate_remove_initial_frame_offset():
     assert stats["rmse"] < 1e-9
 
 
+@pytest.mark.parametrize(
+    ("estimate", "ground_truth", "message"),
+    [
+        (
+            np.array(
+                [[2.0, -1.0], [2.0 + 1e-12, -1.0], [2.0, -1.0 + 1e-12]]
+            ),
+            np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]]),
+            "estimate_xy spatial span is too small",
+        ),
+        (
+            np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]]),
+            np.array(
+                [[3.0, 4.0], [3.0 + 1e-12, 4.0], [3.0, 4.0 + 1e-12]]
+            ),
+            "ground_truth_xy spatial span is too small",
+        ),
+    ],
+)
+def test_se2_alignment_rejects_trajectories_with_near_zero_span(
+    estimate, ground_truth, message
+):
+    with pytest.raises(ValueError, match=message):
+        metrics.align_se2(estimate, ground_truth)
+
+
+def test_se2_alignment_allows_a_nonzero_straight_trajectory():
+    estimate = np.array([[2.0, 3.0], [2.0, 4.0], [2.0, 5.0]])
+    ground_truth = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
+
+    aligned, _, _ = metrics.align_se2(estimate, ground_truth)
+
+    assert np.allclose(aligned, ground_truth, atol=1e-12)
+
+
 def test_alignment_returns_proper_rotation_when_data_suggests_reflection():
     estimate = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 2.0]])
     reflected = estimate * np.array([-1.0, 1.0])
+    root_13 = np.sqrt(13.0)
+    expected_rotation = np.array(
+        [[3.0 / root_13, 2.0 / root_13], [-2.0 / root_13, 3.0 / root_13]]
+    )
+    expected_translation = np.array(
+        [
+            -(root_13 + 7.0) / (3.0 * root_13),
+            (2.0 * root_13 - 4.0) / (3.0 * root_13),
+        ]
+    )
+    expected_aligned = np.array(
+        [
+            expected_translation,
+            [
+                (2.0 - root_13) / (3.0 * root_13),
+                (2.0 * root_13 - 10.0) / (3.0 * root_13),
+            ],
+            [
+                (5.0 - root_13) / (3.0 * root_13),
+                (2.0 * root_13 + 14.0) / (3.0 * root_13),
+            ],
+        ]
+    )
 
-    _, rotation, _ = metrics.align_se2(estimate, reflected)
+    aligned, rotation, translation = metrics.align_se2(estimate, reflected)
 
     assert np.isclose(np.linalg.det(rotation), 1.0)
+    assert np.allclose(rotation, expected_rotation, atol=1e-12)
+    assert np.allclose(translation, expected_translation, atol=1e-12)
+    assert np.allclose(aligned, expected_aligned, atol=1e-12)
+    assert np.linalg.norm(aligned - reflected) > 0.5
+
+
+def test_apply_se2_to_poses_transforms_xy_and_yaw_in_the_same_direction():
+    poses = np.array([[1.0, 0.0, 0.0], [0.0, 2.0, 3.0 * np.pi / 4.0]])
+    rotation = np.array([[0.0, -1.0], [1.0, 0.0]])
+    translation = np.array([10.0, -2.0])
+
+    transformed = metrics.apply_se2_to_poses(poses, rotation, translation)
+
+    assert np.allclose(
+        transformed,
+        [[10.0, -1.0, np.pi / 2.0], [8.0, -2.0, -3.0 * np.pi / 4.0]],
+        atol=1e-12,
+    )
 
 
 def test_nearest_sync_rejects_samples_outside_tolerance():
@@ -67,6 +143,20 @@ def test_nearest_sync_uses_each_ground_truth_sample_at_most_once():
     assert times.tolist() == [0.0]
 
 
+def test_nearest_sync_never_crosses_back_to_an_earlier_ground_truth_sample():
+    _, ground_truth, _ = metrics.synchronize_nearest(
+        np.array([0.099, 0.101]),
+        np.zeros((2, 3)),
+        np.array([0.080, 0.100]),
+        np.array([[0.080, 0.0, 0.0], [0.100, 0.0, 0.0]]),
+        0.05,
+    )
+
+    matched_ground_truth_times = ground_truth[:, 0]
+    assert np.all(np.diff(matched_ground_truth_times) > 0.0)
+    assert np.unique(matched_ground_truth_times).size == ground_truth.shape[0]
+
+
 def test_rte_is_zero_for_identical_relative_motion():
     times = np.arange(0.0, 5.0, 0.5)
     poses = np.column_stack((times, 0.2 * times, 0.1 * times))
@@ -95,6 +185,14 @@ def test_rte_uses_full_se2_relative_motion_and_wraps_yaw():
     assert stats["translation_rmse"] < 1e-12
     assert stats["yaw_rmse"] < 1e-12
     assert stats["pair_count"] == 2
+
+
+def test_rte_rejects_sparse_pairs_far_from_requested_interval():
+    times = np.array([0.0, 0.1, 10.0])
+    poses = np.column_stack((times, np.zeros(3), np.zeros(3)))
+
+    with pytest.raises(ValueError, match="within 10%"):
+        metrics.compute_rte(times, poses, poses, delta_s=1.0)
 
 
 def test_ate_returns_hand_checked_statistics_and_per_sample_errors():

@@ -54,6 +54,7 @@ def test_evaluator_uses_required_topics_metrics_and_outputs():
     assert "ExternalShutdownException" in source
     assert "synchronize_nearest" in source
     assert "align_se2" in source
+    assert "apply_se2_to_poses" in source
     assert "compute_ate" in source and "compute_rte" in source
     assert "matplotlib" in source and "csv" in source
     assert "trajectory_samples.csv" in source

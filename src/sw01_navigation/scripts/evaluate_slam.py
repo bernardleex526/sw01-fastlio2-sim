@@ -21,10 +21,10 @@ from rclpy.qos import qos_profile_sensor_data
 
 from trajectory_metrics import (
     align_se2,
+    apply_se2_to_poses,
     compute_ate,
     compute_rte,
     synchronize_nearest,
-    wrap_angle,
 )
 
 
@@ -154,13 +154,10 @@ def _evaluate(estimate_samples, ground_truth_samples, output_dir, tolerance):
             f"fewer than 10 synchronized samples ({matched_times.size})"
         )
 
-    aligned_xy, rotation, translation = align_se2(
+    _, rotation, translation = align_se2(
         estimate[:, :2], ground_truth[:, :2]
     )
-    alignment_yaw = math.atan2(rotation[1, 0], rotation[0, 0])
-    aligned = np.column_stack(
-        (aligned_xy, wrap_angle(estimate[:, 2] + alignment_yaw))
-    )
+    aligned = apply_se2_to_poses(estimate, rotation, translation)
     ate = compute_ate(aligned[:, :2], ground_truth[:, :2])
     rte = compute_rte(matched_times, aligned, ground_truth, delta_s=1.0)
 
