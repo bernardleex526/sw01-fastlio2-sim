@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <sdf version="1.6">
   <world name="sw01_maze">
-    <!-- 设计规范固定的物理与环境光：重力为地球重力，较高 ambient 让封闭迷宫不依赖联网纹理也清晰可见。 -->
+    <!-- 设计规范固定的物理与环境光：重力为 (0,0,-9.8)，ambient=(0.8,0.8,0.8,1) 让封闭迷宫不依赖联网纹理也清晰可见。 -->
     <gravity>0 0 -9.8</gravity>
     <scene><ambient>0.8 0.8 0.8 1</ambient></scene>
-    <!-- directional sun 提供整体照明；中心正上方 12 m 的 point light 消除迷宫内部的暗角。 -->
+    <!-- directional sun 位于 (0,0,10)、方向为 (-0.5,0.1,-0.9) 提供整体照明；point light 位于 (0,0,12)、range=40，消除迷宫内部暗角。 -->
     <light name="sun" type="directional"><pose>0 0 10 0 0 0</pose><cast_shadows>true</cast_shadows><diffuse>0.8 0.8 0.8 1</diffuse><specular>0.2 0.2 0.2 1</specular><direction>-0.5 0.1 -0.9</direction></light>
     <light name="maze_point_light" type="point"><pose>0 0 12 0 0 0</pose><cast_shadows>false</cast_shadows><diffuse>0.6 0.6 0.6 1</diffuse><specular>0.1 0.1 0.1 1</specular><attenuation><range>40</range><constant>0.7</constant><linear>0.01</linear><quadratic>0.001</quadratic></attenuation></light>
 
