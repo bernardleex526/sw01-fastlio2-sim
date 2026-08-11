@@ -6,6 +6,7 @@ from conftest import ROOT
 
 
 GOAL_SCRIPT = ROOT / "src" / "sw01_navigation" / "scripts" / "send_nav_goal.py"
+EVAL_SCRIPT = ROOT / "src" / "sw01_navigation" / "scripts" / "evaluate_slam.py"
 NAVIGATION_CMAKE = ROOT / "src" / "sw01_navigation" / "CMakeLists.txt"
 
 
@@ -30,10 +31,50 @@ def test_goal_sender_is_installed_as_a_ros_executable():
 
     assert re.search(
         r"install\(\s*PROGRAMS\s+scripts/send_nav_goal\.py\s+"
+        r"scripts/evaluate_slam\.py\s+"
         r"DESTINATION\s+lib/\$\{PROJECT_NAME\}\s*\)",
         cmake,
         flags=re.DOTALL,
     )
     assert not re.search(
         r"install\(\s*DIRECTORY\b[^)]*\bscripts\b", cmake, flags=re.DOTALL
+    )
+
+
+def test_evaluator_uses_required_topics_metrics_and_outputs():
+    """评估器缺少数据源、指标、产物或运行时参数时必须失败。"""
+    source = EVAL_SCRIPT.read_text(encoding="utf-8")
+    ast.parse(source)
+
+    assert source.startswith("#!/usr/bin/env python3")
+    assert '"/Odometry"' in source
+    assert '"/ground_truth/odom"' in source
+    assert source.count("qos_profile_sensor_data") >= 3
+    assert "threading.Lock" in source
+    assert "ExternalShutdownException" in source
+    assert "synchronize_nearest" in source
+    assert "align_se2" in source
+    assert "compute_ate" in source and "compute_rte" in source
+    assert "matplotlib" in source and "csv" in source
+    assert "trajectory_samples.csv" in source
+    assert "trajectory_comparison.png" in source
+    assert "--duration" in source and "--output-dir" in source
+    assert "0.05" in source
+
+
+def test_evaluator_and_metrics_are_installed_together_for_ros2_run():
+    """评估器与本地 metrics 未同目录安装时，ros2 run 后导入会失败。"""
+    cmake = NAVIGATION_CMAKE.read_text(encoding="utf-8")
+
+    assert re.search(
+        r"install\(\s*PROGRAMS\s+scripts/send_nav_goal\.py\s+"
+        r"scripts/evaluate_slam\.py\s+DESTINATION\s+lib/\$\{PROJECT_NAME\}\s*\)",
+        cmake,
+        flags=re.DOTALL,
+    )
+    assert re.search(
+        r"install\(\s*FILES\s+scripts/trajectory_metrics\.py\s+"
+        r"DESTINATION\s+lib/\$\{PROJECT_NAME\}\s*\)",
+        cmake,
+        flags=re.DOTALL,
     )
