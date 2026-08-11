@@ -39,6 +39,19 @@ def test_simulation_quotes_the_xacro_path_as_one_shell_argument():
     assert len(command.args) == 1 and isinstance(command.args[0], ast.List)
     parts = command.args[0].elts
     assert len(parts) == 4
+    executable = parts[0]
+    assert isinstance(executable, ast.Call)
+    assert (
+        isinstance(executable.func, ast.Name)
+        and executable.func.id == "FindExecutable"
+    )
+    assert executable.args == []
+    assert len(executable.keywords) == 1
+    assert executable.keywords[0].arg == "name"
+    assert (
+        isinstance(executable.keywords[0].value, ast.Constant)
+        and executable.keywords[0].value.value == "xacro"
+    )
     assert isinstance(parts[1], ast.Constant) and parts[1].value == ' "'
     assert isinstance(parts[2], ast.Name) and parts[2].id == "xacro_file"
     assert isinstance(parts[3], ast.Constant) and parts[3].value == '"'
