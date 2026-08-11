@@ -14,6 +14,63 @@ FOOTPRINT = [
     [0.0, -0.27],
     [0.325, -0.19],
 ]
+LIFECYCLE_NODES = [
+    "controller_server",
+    "planner_server",
+    "behavior_server",
+    "bt_navigator",
+    "waypoint_follower",
+    "velocity_smoother",
+]
+HUMBLE_BT_PLUGIN_LIBS = [
+    "nav2_compute_path_to_pose_action_bt_node",
+    "nav2_compute_path_through_poses_action_bt_node",
+    "nav2_smooth_path_action_bt_node",
+    "nav2_follow_path_action_bt_node",
+    "nav2_spin_action_bt_node",
+    "nav2_wait_action_bt_node",
+    "nav2_assisted_teleop_action_bt_node",
+    "nav2_back_up_action_bt_node",
+    "nav2_drive_on_heading_bt_node",
+    "nav2_clear_costmap_service_bt_node",
+    "nav2_is_stuck_condition_bt_node",
+    "nav2_goal_reached_condition_bt_node",
+    "nav2_goal_updated_condition_bt_node",
+    "nav2_globally_updated_goal_condition_bt_node",
+    "nav2_is_path_valid_condition_bt_node",
+    "nav2_initial_pose_received_condition_bt_node",
+    "nav2_reinitialize_global_localization_service_bt_node",
+    "nav2_rate_controller_bt_node",
+    "nav2_distance_controller_bt_node",
+    "nav2_speed_controller_bt_node",
+    "nav2_truncate_path_action_bt_node",
+    "nav2_truncate_path_local_action_bt_node",
+    "nav2_goal_updater_node_bt_node",
+    "nav2_recovery_node_bt_node",
+    "nav2_pipeline_sequence_bt_node",
+    "nav2_round_robin_node_bt_node",
+    "nav2_transform_available_condition_bt_node",
+    "nav2_time_expired_condition_bt_node",
+    "nav2_path_expiring_timer_condition",
+    "nav2_distance_traveled_condition_bt_node",
+    "nav2_single_trigger_bt_node",
+    "nav2_goal_updated_controller_bt_node",
+    "nav2_is_battery_low_condition_bt_node",
+    "nav2_navigate_through_poses_action_bt_node",
+    "nav2_navigate_to_pose_action_bt_node",
+    "nav2_remove_passed_goals_action_bt_node",
+    "nav2_planner_selector_bt_node",
+    "nav2_controller_selector_bt_node",
+    "nav2_goal_checker_selector_bt_node",
+    "nav2_controller_cancel_bt_node",
+    "nav2_path_longer_on_approach_bt_node",
+    "nav2_wait_cancel_bt_node",
+    "nav2_spin_cancel_bt_node",
+    "nav2_back_up_cancel_bt_node",
+    "nav2_assisted_teleop_cancel_bt_node",
+    "nav2_drive_on_heading_cancel_bt_node",
+    "nav2_is_battery_charging_condition_bt_node",
+]
 
 
 def test_nav2_planner_controller_and_frames():
@@ -97,3 +154,34 @@ def test_all_nav2_nodes_use_sim_time_and_smoother_uses_fast_lio_odometry():
     assert smoother["smoothing_frequency"] == 40.0
     assert smoother["feedback"] == "OPEN_LOOP"
     assert smoother["odom_topic"] == "/Odometry"
+
+
+def test_lifecycle_manager_autostarts_actual_navigation_servers():
+    """Catches lifecycle bringup that omits servers or manages internal costmaps."""
+    lifecycle = load_yaml(NAV2)["lifecycle_manager"]["ros__parameters"]
+
+    assert lifecycle["use_sim_time"] is True
+    assert lifecycle["autostart"] is True
+    assert 0.0 < lifecycle["bond_timeout"] <= 10.0
+    assert lifecycle["node_names"] == LIFECYCLE_NODES
+
+
+def test_humble_bt_navigator_loads_standard_navigation_plugins():
+    """Catches a Humble navigator unable to build its default navigation trees."""
+    bt = load_yaml(NAV2)["bt_navigator"]["ros__parameters"]
+
+    assert bt["plugin_lib_names"] == HUMBLE_BT_PLUGIN_LIBS
+
+
+def test_humble_behavior_server_uses_the_local_costmap_topics():
+    """Catches non-Humble behavior topic keys that the server will ignore."""
+    behavior = load_yaml(NAV2)["behavior_server"]["ros__parameters"]
+
+    assert behavior["costmap_topic"] == "local_costmap/costmap_raw"
+    assert behavior["footprint_topic"] == "local_costmap/published_footprint"
+    assert not {
+        "local_costmap_topic",
+        "global_costmap_topic",
+        "local_footprint_topic",
+        "global_footprint_topic",
+    }.intersection(behavior)

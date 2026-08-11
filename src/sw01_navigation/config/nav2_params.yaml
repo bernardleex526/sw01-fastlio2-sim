@@ -79,14 +79,61 @@ bt_navigator:
     odom_topic: "/Odometry"  # 来源：FAST-LIO2 发布的里程计话题。
     bt_loop_duration: 10  # 来源：Nav2 行为树基线循环周期，单位 ms。
     default_server_timeout: 20  # 来源：Nav2 行为树基线服务等待上限，单位 ms。
+    # 来源：Navigation2 官方 Humble 默认配置；同时覆盖 NavigateToPose 与 NavigateThroughPoses 行为树所需节点。
+    plugin_lib_names:
+      - nav2_compute_path_to_pose_action_bt_node
+      - nav2_compute_path_through_poses_action_bt_node
+      - nav2_smooth_path_action_bt_node
+      - nav2_follow_path_action_bt_node
+      - nav2_spin_action_bt_node
+      - nav2_wait_action_bt_node
+      - nav2_assisted_teleop_action_bt_node
+      - nav2_back_up_action_bt_node
+      - nav2_drive_on_heading_bt_node
+      - nav2_clear_costmap_service_bt_node
+      - nav2_is_stuck_condition_bt_node
+      - nav2_goal_reached_condition_bt_node
+      - nav2_goal_updated_condition_bt_node
+      - nav2_globally_updated_goal_condition_bt_node
+      - nav2_is_path_valid_condition_bt_node
+      - nav2_initial_pose_received_condition_bt_node
+      - nav2_reinitialize_global_localization_service_bt_node
+      - nav2_rate_controller_bt_node
+      - nav2_distance_controller_bt_node
+      - nav2_speed_controller_bt_node
+      - nav2_truncate_path_action_bt_node
+      - nav2_truncate_path_local_action_bt_node
+      - nav2_goal_updater_node_bt_node
+      - nav2_recovery_node_bt_node
+      - nav2_pipeline_sequence_bt_node
+      - nav2_round_robin_node_bt_node
+      - nav2_transform_available_condition_bt_node
+      - nav2_time_expired_condition_bt_node
+      - nav2_path_expiring_timer_condition
+      - nav2_distance_traveled_condition_bt_node
+      - nav2_single_trigger_bt_node
+      - nav2_goal_updated_controller_bt_node
+      - nav2_is_battery_low_condition_bt_node
+      - nav2_navigate_through_poses_action_bt_node
+      - nav2_navigate_to_pose_action_bt_node
+      - nav2_remove_passed_goals_action_bt_node
+      - nav2_planner_selector_bt_node
+      - nav2_controller_selector_bt_node
+      - nav2_goal_checker_selector_bt_node
+      - nav2_controller_cancel_bt_node
+      - nav2_path_longer_on_approach_bt_node
+      - nav2_wait_cancel_bt_node
+      - nav2_spin_cancel_bt_node
+      - nav2_back_up_cancel_bt_node
+      - nav2_assisted_teleop_cancel_bt_node
+      - nav2_drive_on_heading_cancel_bt_node
+      - nav2_is_battery_charging_condition_bt_node
 
 behavior_server:
   ros__parameters:
     use_sim_time: true  # 来源：Gazebo 发布 /clock，恢复行为节点统一使用仿真时钟。
-    local_costmap_topic: "local_costmap/costmap_raw"  # 来源：Nav2 本地代价地图节点的原始代价话题。
-    global_costmap_topic: "global_costmap/costmap_raw"  # 来源：Nav2 全局代价地图节点的原始代价话题。
-    local_footprint_topic: "local_costmap/published_footprint"  # 来源：本地代价地图发布的 SW01 实际轮廓话题。
-    global_footprint_topic: "global_costmap/published_footprint"  # 来源：全局代价地图发布的 SW01 实际轮廓话题。
+    costmap_topic: "local_costmap/costmap_raw"  # 来源：Humble behavior_server 使用本地代价地图原始代价话题检查恢复行为。
+    footprint_topic: "local_costmap/published_footprint"  # 来源：Humble behavior_server 使用本地代价地图发布的 SW01 实际轮廓话题。
     cycle_frequency: 10.0  # 来源：Nav2 恢复行为基线执行频率，单位 Hz。
     behavior_plugins: ["spin", "backup", "drive_on_heading", "wait"]
     spin:
@@ -131,6 +178,20 @@ velocity_smoother:
     odom_duration: 0.10  # 来源：FAST-LIO2 仿真里程计的 10 Hz 观测窗口，单位 s。
     deadband_velocity: [0.0, 0.0, 0.0]  # 来源：仿真无机械死区，x、y、theta 三轴均不附加死区。
     velocity_timeout: 1.0  # 来源：导航速度指令失联后的安全停机窗口，单位 s。
+
+lifecycle_manager:
+  ros__parameters:
+    use_sim_time: true  # 来源：Gazebo 发布 /clock，生命周期协调器与被管理节点使用同一仿真时钟。
+    autostart: true  # 来源：仿真启动后自动配置并激活完整导航服务器集合。
+    bond_timeout: 4.0  # 来源：Navigation2 Humble 生命周期管理器默认 bond 看门狗超时，单位 s。
+    # 来源：本配置实际启动的生命周期服务器；costmap 由 controller/planner server 内部管理，不单独列出。
+    node_names:
+      - controller_server
+      - planner_server
+      - behavior_server
+      - bt_navigator
+      - waypoint_follower
+      - velocity_smoother
 
 local_costmap:
   local_costmap:
