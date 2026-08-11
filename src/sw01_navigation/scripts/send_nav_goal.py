@@ -10,6 +10,7 @@ from action_msgs.msg import GoalStatus
 from nav2_msgs.action import NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from rclpy.utilities import remove_ros_args
 
 
 EXIT_SUCCESS = 0
@@ -102,8 +103,8 @@ class NavGoalSender(Node):
         )
         if not cancel_future.done():
             self.get_logger().warning(
-                "Timed out waiting %.1f seconds for cancellation acknowledgement.",
-                CANCEL_TIMEOUT_SECONDS,
+                f"Timed out waiting {CANCEL_TIMEOUT_SECONDS:.1f} seconds for "
+                "cancellation acknowledgement."
             )
             return
 
@@ -127,16 +128,21 @@ def exit_code_for_status(status):
 
 def main(argv=None):
     """等待 Nav2、发送目标、等待终态，并返回明确的退出码。"""
-    arguments = parse_arguments(argv)
-    rclpy.init(args=None)
+    # argv=None 时保留真实进程 argv；显式 argv 继续采用“不含程序名”的可测试调用约定。
+    ros_argv = list(sys.argv) if argv is None else [sys.argv[0], *argv]
+    # 先剥离 --ros-args 段，避免 argparse 拒绝 use_sim_time 等 ROS 参数。
+    non_ros_argv = remove_ros_args(args=ros_argv)[1:]
+    arguments = parse_arguments(non_ros_argv)
+    # 同一完整 argv 交给 rclpy，使 Node 时钟收到 use_sim_time 参数覆盖。
+    rclpy.init(args=ros_argv)
     node = None
     goal_handle = None
 
     try:
         node = NavGoalSender()
         node.get_logger().info(
-            "Waiting up to %.1f seconds for /navigate_to_pose.",
-            arguments.server_timeout,
+            f"Waiting up to {arguments.server_timeout:.1f} seconds for "
+            "/navigate_to_pose."
         )
         if not node._client.wait_for_server(timeout_sec=arguments.server_timeout):
             node.get_logger().error("Nav2 action server /navigate_to_pose is unavailable.")
@@ -144,11 +150,8 @@ def main(argv=None):
 
         goal = node.build_goal(arguments)
         node.get_logger().info(
-            "Sending goal: frame=%s, x=%.2f, y=%.2f, yaw=%.2f rad.",
-            arguments.frame,
-            arguments.x,
-            arguments.y,
-            arguments.yaw,
+            f"Sending goal: frame={arguments.frame}, x={arguments.x:.2f}, "
+            f"y={arguments.y:.2f}, yaw={arguments.yaw:.2f} rad."
         )
         send_future = node._client.send_goal_async(
             goal, feedback_callback=node.feedback_callback
@@ -166,7 +169,9 @@ def main(argv=None):
         wrapped_result = result_future.result()
         status = wrapped_result.status
         status_label = STATUS_LABELS.get(status, "UNRECOGNIZED")
-        node.get_logger().info("Navigation finished with status %s (%d).", status_label, status)
+        node.get_logger().info(
+            f"Navigation finished with status {status_label} ({status})."
+        )
         return exit_code_for_status(status)
     except KeyboardInterrupt:
         if node is not None and goal_handle is not None and goal_handle.accepted:

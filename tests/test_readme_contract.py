@@ -83,6 +83,48 @@ def test_readme_limits_colcon_discovery_and_handles_the_external_livox_key():
     assert "--base-paths src" in text
 
 
+def test_every_goal_command_enables_gazebo_simulation_time():
+    """可复制的目标命令若漏传 use_sim_time，goal stamp 会与 Gazebo TF 时间域冲突。"""
+    text = README.read_text(encoding="utf-8")
+    commands = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip().startswith("ros2 run sw01_navigation send_nav_goal.py")
+    ]
+
+    assert len(commands) == 3
+    assert all(
+        command.endswith("--ros-args -p use_sim_time:=true")
+        for command in commands
+    )
+    assert "目标发送节点" in text
+    assert "Gazebo `/clock`" in text
+
+
+def test_readme_distinguishes_created_fast_lio_endpoints_from_enabled_outputs():
+    """README 不得把本地源码创建但默认门控关闭的点云端点写成活跃输出。"""
+    text = README.read_text(encoding="utf-8")
+    cloud_effected_line = next(
+        line for line in text.splitlines() if line.startswith("| `/cloud_effected`")
+    )
+    laser_map_line = next(
+        line for line in text.splitlines() if line.startswith("| `/Laser_map`")
+    )
+    path_line = next(
+        line for line in text.splitlines() if line.startswith("| `/path`")
+    )
+
+    assert "源码创建/固定名称端点" in text
+    assert "本配置实际启用输出" in text
+    assert "`/cloud_registered`、`/cloud_registered_body`、`/Odometry`、`/path`" in text
+    assert "默认禁用" in cloud_effected_line and "0 Hz" in cloud_effected_line
+    assert "默认禁用" in laser_map_line and "0 Hz" in laser_map_line
+    assert "≈ 1 Hz" in path_line and "每 10 帧" in path_line
+    assert "publish.effect_map_en" in text
+    assert "publish.map_en" in text
+    assert "laserMapping.cpp" in text
+
+
 def _exec_dependencies(package_name):
     root = parse_xml(SRC / package_name / "package.xml")
     return {node.text for node in root.findall("exec_depend")}

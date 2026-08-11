@@ -20,7 +20,8 @@ D:\slam\自研\fast-lio2\slam\src\x30\sensing\FAST_LIO
 
 - 输入参数键：`common.lid_topic=/velodyne_points`、`common.imu_topic=/imu/data`；
 - `preprocess.lidar_type=2` 选择 Velodyne `sensor_msgs/msg/PointCloud2` 路径；
-- 固定输出：`/cloud_registered`、`/cloud_registered_body`、`/cloud_effected`、`/Laser_map`、`/Odometry`、`/path`；
+- 源码创建/固定名称端点：`/cloud_registered`、`/cloud_registered_body`、`/cloud_effected`、`/Laser_map`、`/Odometry`、`/path`；
+- 本配置实际启用输出：`/cloud_registered`、`/cloud_registered_body`、`/Odometry`、`/path`；
 - 固定动态 TF：`camera_init -> body`；
 - executable 名不是 `fast_lio`，而是 `fastlio_mapping`；
 - 本地 `package.xml` 无条件依赖 `livox_ros_driver2`，所以即使仿真使用 Velodyne，也必须让该包在构建时可发现。
@@ -106,13 +107,16 @@ sw01_sim_ws/
 | `/Odometry` | `nav_msgs/msg/Odometry` | ≈ 10 Hz | FAST-LIO2；parent `camera_init`、child `body` |
 | `/cloud_registered` | `sensor_msgs/msg/PointCloud2` | ≈ 10 Hz | FAST-LIO2；frame `camera_init`，投影和 RViz 使用 |
 | `/cloud_registered_body` | `sensor_msgs/msg/PointCloud2` | ≈ 10 Hz | FAST-LIO2；frame `body` |
-| `/Laser_map` | `sensor_msgs/msg/PointCloud2` | ≈ 1 Hz | FAST-LIO2 累积点云；不用于 2D scan |
-| `/path` | `nav_msgs/msg/Path` | ≈ 10 Hz | FAST-LIO2 轨迹 |
+| `/cloud_effected` | `sensor_msgs/msg/PointCloud2` | 0 Hz | FAST-LIO2 创建端点；默认禁用（`publish.effect_map_en=false`） |
+| `/Laser_map` | `sensor_msgs/msg/PointCloud2` | 0 Hz | FAST-LIO2 创建端点；默认禁用（`publish.map_en=false`），不用于 2D scan |
+| `/path` | `nav_msgs/msg/Path` | ≈ 1 Hz | FAST-LIO2 每 10 帧发布一次；10 Hz LiDAR 下约 1 Hz |
 | `/scan` | `sensor_msgs/msg/LaserScan` | ≈ 10 Hz | `pointcloud_to_laserscan`；slam_toolbox/Nav2 输入 |
 | `/map` | `nav_msgs/msg/OccupancyGrid` | ≈ 1 Hz | slam_toolbox；Nav2 global costmap 输入 |
 | `/cmd_vel` | `geometry_msgs/msg/Twist` | 控制时最高 ≈ 40 Hz | Nav2 velocity smoother；Planar Move 输入 |
 
 Velodyne 路径的 PointCloud2 预处理契约写作 `x/y/z/intensity/time/ring`。`ring` 必须存在；若 `time` 字段缺失、全零或没有有效逐点时间，本地 FAST-LIO2 的 Velodyne 分支会用 ring、方位角和 `scan_rate=10` 合成相对时间。这个结论只适用于已审计的本地源码，不可推广到任意 FAST-LIO fork。
+
+以上 FAST-LIO2 输出状态来自本地 `laserMapping.cpp` 与 `sw01_sim.yaml`：源码中 `publish.effect_map_en`、`publish.map_en` 默认都是 `false`，本配置未覆盖，因此 `/cloud_effected` 和 `/Laser_map` 当前无消息（0 Hz）；`publish_path()` 每 10 帧才发布一次，所以 10 Hz LiDAR 输入下 `/path` 约为 1 Hz。若确需这两个点云输出，必须在 `publish` 参数中显式配置；其中 `/Laser_map` 的主循环调用当前被注释，且定时器仍受 `map_pub_en` 门控，能否实际发布必须以所用本地源码为准，不能只凭端点存在作判断。
 
 ## 4. TF 唯一发布者与参数来源
 
@@ -353,22 +357,22 @@ ros2 launch sw01_gazebo full_demo.launch.py --show-args
 先确认 `/planner_server`、`/controller_server` 为 `active`。默认终点来自迷宫蓝色终点区 `(12, 12, yaw=0)`：
 
 ```bash
-ros2 run sw01_navigation send_nav_goal.py
+ros2 run sw01_navigation send_nav_goal.py --ros-args -p use_sim_time:=true
 ```
 
 自定义 map 坐标目标：
 
 ```bash
-ros2 run sw01_navigation send_nav_goal.py --x 8.0 --y 11.0 --yaw 1.5708
+ros2 run sw01_navigation send_nav_goal.py --x 8.0 --y 11.0 --yaw 1.5708 --ros-args -p use_sim_time:=true
 ```
 
 完整默认值显式写法：
 
 ```bash
-ros2 run sw01_navigation send_nav_goal.py --x 12 --y 12 --yaw 0 --frame map
+ros2 run sw01_navigation send_nav_goal.py --x 12 --y 12 --yaw 0 --frame map --ros-args -p use_sim_time:=true
 ```
 
-脚本会报告 goal accepted/rejected、剩余距离、预计时间、recovery 次数和 succeeded/canceled/aborted 终态，并以不同退出码区分失败。
+目标发送节点用自身 ROS clock 生成 goal header stamp；整套仿真以 Gazebo `/clock` 为时间源，因此每条可复制命令都显式传入 `use_sim_time:=true`。自定义参数放在 `--ros-args` 之前，ROS 参数放在其后。脚本会报告 goal accepted/rejected、剩余距离、预计时间、recovery 次数和 succeeded/canceled/aborted 终态，并以不同退出码区分失败。
 
 ## 10. 评估 ATE/RTE
 

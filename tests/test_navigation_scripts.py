@@ -25,6 +25,84 @@ def test_goal_sender_uses_nav2_action_and_maze_default():
     assert any(isinstance(node, ast.If) for node in ast.walk(tree))
 
 
+def test_goal_sender_separates_ros_arguments_before_argparse_and_reuses_ros_argv():
+    """ROS 参数若进入 argparse，或 init 未收到同一完整 argv，仿真时钟目标会失败。"""
+    tree = ast.parse(GOAL_SCRIPT.read_text(encoding="utf-8"))
+    main = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "main"
+    )
+
+    calls = [node for node in ast.walk(main) if isinstance(node, ast.Call)]
+    remove_call = next(
+        node
+        for node in calls
+        if isinstance(node.func, ast.Name) and node.func.id == "remove_ros_args"
+    )
+    parse_call = next(
+        node
+        for node in calls
+        if isinstance(node.func, ast.Name) and node.func.id == "parse_arguments"
+    )
+    init_call = next(
+        node
+        for node in calls
+        if isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "rclpy"
+        and node.func.attr == "init"
+    )
+
+    assert remove_call.lineno < parse_call.lineno < init_call.lineno
+    assert len(remove_call.keywords) == 1 and remove_call.keywords[0].arg == "args"
+    assert isinstance(remove_call.keywords[0].value, ast.Name)
+    ros_argv_name = remove_call.keywords[0].value.id
+    assert ros_argv_name == "ros_argv"
+    assert len(parse_call.args) == 1
+    assert isinstance(parse_call.args[0], ast.Name)
+    assert parse_call.args[0].id == "non_ros_argv"
+    init_args = next(keyword.value for keyword in init_call.keywords if keyword.arg == "args")
+    assert isinstance(init_args, ast.Name) and init_args.id == ros_argv_name
+
+
+def test_goal_sender_keeps_parse_arguments_independently_callable():
+    """自定义参数解析必须继续接受不含程序名的 argv，供 main 和单测复用。"""
+    tree = ast.parse(GOAL_SCRIPT.read_text(encoding="utf-8"))
+    parser = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "parse_arguments"
+    )
+
+    assert [argument.arg for argument in parser.args.args] == ["argv"]
+    parse_args_call = next(
+        node
+        for node in ast.walk(parser)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "parse_args"
+    )
+    assert len(parse_args_call.args) == 1
+    assert isinstance(parse_args_call.args[0], ast.Name)
+    assert parse_args_call.args[0].id == "argv"
+
+
+def test_goal_sender_uses_humble_logger_single_message_api():
+    """Humble RcutilsLogger 不接受 printf 风格额外位置参数，入口不得提前崩溃。"""
+    tree = ast.parse(GOAL_SCRIPT.read_text(encoding="utf-8"))
+    logging_calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr in {"debug", "info", "warning", "error", "fatal"}
+    ]
+
+    assert logging_calls
+    assert all(len(call.args) == 1 for call in logging_calls)
+
+
 def test_goal_sender_is_installed_as_a_ros_executable():
     """若改回 share 资源安装，ros2 run 将找不到目标发送器。"""
     cmake = NAVIGATION_CMAKE.read_text(encoding="utf-8")
