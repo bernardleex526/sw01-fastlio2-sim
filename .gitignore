@@ -1,0 +1,10 @@
+build/
+install/
+log/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Local links to the audited external FAST-LIO2 checkout (see README).
+fast_lio2
+src/FAST_LIO
