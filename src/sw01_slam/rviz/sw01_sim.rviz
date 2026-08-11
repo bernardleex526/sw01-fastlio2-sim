@@ -1,0 +1,81 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Background Color: 48; 48; 48  # 来源：RViz 深色背景的标准灰度值，便于辨识彩色点云与路径。
+    Fixed Frame: map  # 来源：slam_toolbox 发布的全局建图坐标系。
+    Frame Rate: 30  # 来源：交互显示的平滑刷新频率，单位 Hz。
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1  # 来源：迷宫尺度参考网格，单位 m。
+      Plane: XY
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Description Topic:
+        Value: /robot_description  # 来源：simulation.launch.py 的机器人模型参数话题。
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Names: true
+    - Class: rviz_default_plugins/Map
+      Name: Map
+      Enabled: true
+      Topic:
+        Value: /map  # 来源：slam_toolbox 的占据栅格地图话题。
+      Update Topic:
+        Value: /map_updates  # 来源：slam_toolbox 的增量地图更新话题。
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Registered Point Cloud
+      Enabled: true
+      Topic:
+        Value: /cloud_registered  # 来源：FAST-LIO2 注册点云输出话题。
+      Size (Pixels): 2  # 来源：兼顾迷宫点云密度与可读性的显示点径，单位像素。
+      Style: Points
+    - Class: rviz_default_plugins/Path
+      Name: FAST-LIO2 Path
+      Enabled: true
+      Topic:
+        Value: /path  # 来源：FAST-LIO2 轨迹输出话题。
+    - Class: rviz_default_plugins/Odometry
+      Name: FAST-LIO2 Odometry
+      Enabled: true
+      Topic:
+        Value: /Odometry  # 来源：FAST-LIO2 里程计输出话题。
+    - Class: rviz_default_plugins/Path
+      Name: Global Plan
+      Enabled: true
+      Topic:
+        Value: /plan  # 来源：Nav2 planner_server 的全局规划路径话题。
+    - Class: rviz_default_plugins/Path
+      Name: Local Plan
+      Enabled: true
+      Topic:
+        Value: /local_plan  # 来源：Nav2 controller_server 的局部规划路径话题。
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+    - Class: rviz_default_plugins/SetInitialPose
+      Topic:
+        Value: /initialpose  # 来源：RViz 初始位姿工具的标准输入话题，坐标系为 map。
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Value: /goal_pose  # 来源：Nav2 导航目标的标准输入话题，坐标系为 map。
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 20  # 来源：约 30 m 迷宫的初始俯视观察距离，单位 m。
+      Focal Point:
+        X: 0  # 来源：迷宫世界中心的 x 坐标，单位 m。
+        Y: 0  # 来源：迷宫世界中心的 y 坐标，单位 m。
+        Z: 0  # 来源：地面的 z 坐标，单位 m。
+Window Geometry:
+  Height: 900  # 来源：默认 RViz 窗口高度，单位像素。
+  Width: 1440  # 来源：默认 RViz 窗口宽度，单位像素。
