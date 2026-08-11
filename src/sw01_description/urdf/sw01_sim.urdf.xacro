@@ -387,6 +387,7 @@
       <geometry><box size="0.02 0.02 0.02"/></geometry>
     </collision>
   </link>
+  <!-- IMU 安装坐标取自原始 SW01 URDF 的 base_link 惯性中心；单位为米，姿态保持零旋转。 -->
   <joint name="base_to_imu" type="fixed">
     <origin xyz="0.0065429535 -0.0050846333 0.016924295" rpy="0 0 0"/>
     <parent link="base_link"/><child link="imu_link"/>
@@ -408,11 +409,17 @@
       <geometry><cylinder radius="0.05" length="0.08"/></geometry>
     </collision>
   </link>
+  <!-- 雷达坐标采用仿真设计审定的背部安装位：相对 base_link 后移 0.08 m、上移 0.48 m。 -->
   <joint name="base_to_lidar" type="fixed">
     <origin xyz="-0.08 0 0.48" rpy="0 0 0"/>
     <parent link="base_link"/><child link="lidar_link"/>
   </joint>
 
+  <!--
+    Velodyne 参数源自 FAST-LIO2 的 VELO16 输入契约：话题 /velodyne_points，坐标系 lidar_link。
+    10 Hz、900×16 采样、水平 ±π、垂直 ±0.261799 rad、0.30～35.0 m 量程及 0.01 m 高斯噪声均为审定仿真值；
+    organize_cloud 用于保留有序点云和 ring 信息。
+  -->
   <gazebo reference="lidar_link">
     <sensor name="sw01_velodyne" type="ray">
       <always_on>true</always_on>
@@ -443,6 +450,11 @@
     </sensor>
   </gazebo>
 
+  <!--
+    IMU 参数源自 FAST-LIO2 接口契约：话题 /imu/data，消息坐标系 body，更新率 200 Hz。
+    body 有意不定义为 URDF link，以免与 FAST-LIO2 的 camera_init 到 body 变换形成重复父节点；
+    三轴角速度与加速度噪声标准差分别为 2e-4 rad/s 和 1.7e-3 m/s²。
+  -->
   <gazebo reference="imu_link">
     <sensor name="sw01_imu" type="imu">
       <always_on>true</always_on>
@@ -469,6 +481,10 @@
   </gazebo>
 
   <gazebo>
+    <!--
+      P3D 仅提供评估真值：/ground_truth/odom 以 world 为参考坐标系、跟踪 base_link，更新率 50 Hz；
+      零附加噪声便于与 SLAM 轨迹对比，该话题不接入 FAST-LIO2、slam_toolbox 或 Nav2。
+    -->
     <plugin name="sw01_ground_truth" filename="libgazebo_ros_p3d.so">
       <ros><remapping>odom:=/ground_truth/odom</remapping></ros>
       <body_name>base_link</body_name>
@@ -476,6 +492,10 @@
       <update_rate>50</update_rate>
       <gaussian_noise>0.0</gaussian_noise>
     </plugin>
+    <!--
+      Planar Move 接收 Nav2 的 /cmd_vel，在 base_link 的 xy 和 yaw 平面以 50 Hz 驱动模型；
+      关闭里程计、odom TF 和轮 TF，避免与 FAST-LIO2 发布的定位与坐标变换冲突。
+    -->
     <plugin name="sw01_planar_move" filename="libgazebo_ros_planar_move.so">
       <ros><remapping>cmd_vel:=/cmd_vel</remapping></ros>
       <command_topic>/cmd_vel</command_topic>
