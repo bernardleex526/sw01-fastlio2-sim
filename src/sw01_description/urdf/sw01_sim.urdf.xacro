@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Standalone ROS 2/Gazebo description derived from the audited SW01 SolidWorks export. -->
+<robot name="sw01_sim" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="6.5429535E-03 -5.0846333E-03 1.6924295E-02" rpy="0 0 0"/>
+      <mass value="2.0407928E+01"/>
+      <inertia ixx="1.8977744E-01" ixy="-7.2265648E-04" ixz="2.5633032E-02"
+               iyy="6.9445303E-01" iyz="-1.2110116E-03" izz="6.9663524E-01"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/base_link.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/base_link.STL"/></geometry>
+    </collision>
+  </link>
+
+  <link name="FL_HIP">
+    <inertial>
+      <origin xyz="-4.8202189E-02 -1.5135896E-02 9.9680548E-05" rpy="0 0 0"/>
+      <mass value="3.7806745E-01"/>
+      <inertia ixx="4.1931869E-04" ixy="2.0978547E-04" ixz="4.6350364E-07"
+               iyy="4.6924428E-04" iyz="-3.4418083E-07" izz="6.6767577E-04"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FL_HIP.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FL_HIP.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="FL_HIP_JOINT" type="fixed">
+    <origin xyz="0.286 0.069 0" rpy="0 0 0"/>
+    <parent link="base_link"/><child link="FL_HIP"/>
+  </joint>
+
+  <link name="FL_THIGH">
+    <inertial>
+      <origin xyz="-3.0792227E-03 -6.0894321E-02 -3.9293794E-02" rpy="0 0 0"/>
+      <mass value="3.8112984"/>
+      <inertia ixx="4.2310069E-02" ixy="8.8023785E-04" ixz="-1.7710338E-03"
+               iyy="3.3599109E-02" iyz="9.1741936E-03" izz="1.4338118E-02"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FL_THIGH.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FL_THIGH.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="FL_THIGH_JOINT" type="fixed">
+    <origin xyz="0 0.1288 0" rpy="0 0 0"/>
+    <parent link="FL_HIP"/><child link="FL_THIGH"/>
+  </joint>
+
+  <link name="FL_CALF">
+    <inertial>
+      <origin xyz="5.0421447E-03 1.3191064E-02 -2.0079489E-01" rpy="0 0 0"/>
+      <mass value="1.8403317"/>
+      <inertia ixx="1.8138946E-02" ixy="1.2013213E-04" ixz="-4.3989117E-04"
+               iyy="1.8855980E-02" iyz="1.5304925E-03" izz="1.7216141E-03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FL_CALF.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FL_CALF.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="FL_CALF_JOINT" type="fixed">
+    <origin xyz="0 0 -0.26" rpy="0 0 0"/>
+    <parent link="FL_THIGH"/><child link="FL_CALF"/>
+  </joint>
+
+  <link name="FL_WHEEL">
+    <inertial>
+      <origin xyz="1.5814735E-05 5.6018438E-02 -8.2127538E-05" rpy="0 0 0"/>
+      <mass value="8.9545384E-01"/>
+      <inertia ixx="2.2876913E-03" ixy="5.4318375E-08" ixz="-7.6507308E-07"
+               iyy="4.2566504E-03" iyz="-2.8175574E-07" izz="2.2915221E-03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FL_WHEEL.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FL_WHEEL.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="FL_WHEEL_JOINT" type="fixed">
+    <origin xyz="0 0 -0.26" rpy="0 0 0"/>
+    <parent link="FL_CALF"/><child link="FL_WHEEL"/>
+  </joint>
+
+  <link name="FR_HIP">
+    <inertial>
+      <origin xyz="-4.8202199E-02 1.5135896E-02 9.9680548E-05" rpy="0 0 0"/>
+      <mass value="3.7806745E-01"/>
+      <inertia ixx="4.1931869E-04" ixy="-2.0978547E-04" ixz="-4.6350364E-07"
+               iyy="4.6924428E-04" iyz="-3.4418083E-07" izz="6.6767577E-04"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FR_HIP.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FR_HIP.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="FR_HIP_JOINT" type="fixed">
+    <origin xyz="0.286 -0.069 0" rpy="0 0 0"/>
+    <parent link="base_link"/><child link="FR_HIP"/>
+  </joint>
+
+  <link name="FR_THIGH">
+    <inertial>
+      <origin xyz="-3.0792227E-03 6.0894321E-02 -3.9293794E-02" rpy="0 0 0"/>
+      <mass value="3.8112984"/>
+      <inertia ixx="4.2310069E-02" ixy="-8.8023785E-04" ixz="-1.7710338E-03"
+               iyy="3.3599109E-02" iyz="-9.1741936E-03" izz="1.4338118E-02"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FR_THIGH.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FR_THIGH.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="FR_THIGH_JOINT" type="fixed">
+    <origin xyz="0 -0.1288 0" rpy="0 0 0"/>
+    <parent link="FR_HIP"/><child link="FR_THIGH"/>
+  </joint>
+
+  <link name="FR_CALF">
+    <inertial>
+      <origin xyz="5.0421447E-03 -1.3191064E-02 -2.0079489E-01" rpy="0 0 0"/>
+      <mass value="1.8403317"/>
+      <inertia ixx="1.8138946E-02" ixy="-1.2013213E-04" ixz="-4.3989117E-04"
+               iyy="1.8855980E-02" iyz="-1.5304925E-03" izz="1.7216141E-03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FR_CALF.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FR_CALF.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="FR_CALF_JOINT" type="fixed">
+    <origin xyz="0 0 -0.26" rpy="0 0 0"/>
+    <parent link="FR_THIGH"/><child link="FR_CALF"/>
+  </joint>
+
+  <link name="FR_WHEEL">
+    <inertial>
+      <origin xyz="1.5814735E-05 -5.6018438E-02 -8.2127538E-05" rpy="0 0 0"/>
+      <mass value="8.9545384E-01"/>
+      <inertia ixx="2.2876913E-03" ixy="-5.4318373E-08" ixz="7.6507308E-07"
+               iyy="4.2566504E-03" iyz="-2.8175574E-07" izz="2.2915221E-03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FR_WHEEL.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/FR_WHEEL.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="FR_WHEEL_JOINT" type="fixed">
+    <origin xyz="0 0 -0.26" rpy="0 0 0"/>
+    <parent link="FR_CALF"/><child link="FR_WHEEL"/>
+  </joint>
+
+  <link name="RL_HIP">
+    <inertial>
+      <origin xyz="4.8202199E-02 -1.5135896E-02 9.9680548E-05" rpy="0 0 0"/>
+      <mass value="3.7806745E-01"/>
+      <inertia ixx="4.1931869E-04" ixy="-2.0978547E-04" ixz="4.6350364E-07"
+               iyy="4.6924428E-04" iyz="3.4418083E-07" izz="6.6767577E-04"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RL_HIP.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RL_HIP.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="RL_HIP_JOINT" type="fixed">
+    <origin xyz="-0.286 0.069 0" rpy="0 0 0"/>
+    <parent link="base_link"/><child link="RL_HIP"/>
+  </joint>
+
+  <link name="RL_THIGH">
+    <inertial>
+      <origin xyz="-3.0792227E-03 -6.0894321E-02 -3.9293794E-02" rpy="0 0 0"/>
+      <mass value="3.8112984"/>
+      <inertia ixx="4.2310069E-02" ixy="8.8023785E-04" ixz="-1.7710338E-03"
+               iyy="3.3599109E-02" iyz="9.1741936E-03" izz="1.4338118E-02"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RL_THIGH.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RL_THIGH.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="RL_THIGH_JOINT" type="fixed">
+    <origin xyz="0 0.1288 0" rpy="0 0 0"/>
+    <parent link="RL_HIP"/><child link="RL_THIGH"/>
+  </joint>
+
+  <link name="RL_CALF">
+    <inertial>
+      <origin xyz="5.0421447E-03 1.3191064E-02 -2.0079489E-01" rpy="0 0 0"/>
+      <mass value="1.8403317"/>
+      <inertia ixx="1.8138946E-02" ixy="1.2013213E-04" ixz="-4.3989117E-04"
+               iyy="1.8855980E-02" iyz="1.5304925E-03" izz="1.7216141E-03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RL_CALF.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RL_CALF.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="RL_CALF_JOINT" type="fixed">
+    <origin xyz="0 0 -0.26" rpy="0 0 0"/>
+    <parent link="RL_THIGH"/><child link="RL_CALF"/>
+  </joint>
+
+  <link name="RL_WHEEL">
+    <inertial>
+      <origin xyz="1.5814735E-05 5.6018438E-02 -8.2127538E-05" rpy="0 0 0"/>
+      <mass value="8.9545384E-01"/>
+      <inertia ixx="2.2876913E-03" ixy="5.4318374E-08" ixz="-7.6507308E-07"
+               iyy="4.2566504E-03" iyz="-2.8175574E-07" izz="2.2915221E-03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RL_WHEEL.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RL_WHEEL.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="RL_WHEEL_JOINT" type="fixed">
+    <origin xyz="0 0 -0.26" rpy="0 0 0"/>
+    <parent link="RL_CALF"/><child link="RL_WHEEL"/>
+  </joint>
+
+  <link name="RR_HIP">
+    <inertial>
+      <origin xyz="4.8202189E-02 1.5135896E-02 9.9680548E-05" rpy="0 0 0"/>
+      <mass value="3.7806745E-01"/>
+      <inertia ixx="4.1931869E-04" ixy="2.0978547E-04" ixz="-4.6350364E-07"
+               iyy="4.6924428E-04" iyz="3.4418083E-07" izz="6.6767577E-04"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RR_HIP.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RR_HIP.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="RR_HIP_JOINT" type="fixed">
+    <origin xyz="-0.286 -0.069 0" rpy="0 0 0"/>
+    <parent link="base_link"/><child link="RR_HIP"/>
+  </joint>
+
+  <link name="RR_THIGH">
+    <inertial>
+      <origin xyz="-3.0792227E-03 6.0894321E-02 -3.9293794E-02" rpy="0 0 0"/>
+      <mass value="3.8112984"/>
+      <inertia ixx="4.2310069E-02" ixy="-8.8023785E-04" ixz="-1.7710338E-03"
+               iyy="3.3599109E-02" iyz="-9.1741936E-03" izz="1.4338118E-02"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RR_THIGH.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RR_THIGH.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="RR_THIGH_JOINT" type="fixed">
+    <origin xyz="0 -0.1288 0" rpy="0 0 0"/>
+    <parent link="RR_HIP"/><child link="RR_THIGH"/>
+  </joint>
+
+  <link name="RR_CALF">
+    <inertial>
+      <origin xyz="5.0421447E-03 -1.3191064E-02 -2.0079489E-01" rpy="0 0 0"/>
+      <mass value="1.8403317"/>
+      <inertia ixx="1.8138946E-02" ixy="-1.2013213E-04" ixz="-4.3989117E-04"
+               iyy="1.8855980E-02" iyz="-1.5304925E-03" izz="1.7216141E-03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RR_CALF.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RR_CALF.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="RR_CALF_JOINT" type="fixed">
+    <origin xyz="0 0 -0.26" rpy="0 0 0"/>
+    <parent link="RR_THIGH"/><child link="RR_CALF"/>
+  </joint>
+
+  <link name="RR_WHEEL">
+    <inertial>
+      <origin xyz="1.5814735E-05 -5.6018438E-02 -8.2127538E-05" rpy="0 0 0"/>
+      <mass value="8.9545384E-01"/>
+      <inertia ixx="2.2876913E-03" ixy="-5.4318373E-08" ixz="7.6507308E-07"
+               iyy="4.2566504E-03" iyz="-2.8175574E-07" izz="2.2915221E-03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RR_WHEEL.STL"/></geometry>
+      <material name=""><color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://sw01_description/meshes/RR_WHEEL.STL"/></geometry>
+    </collision>
+  </link>
+  <joint name="RR_WHEEL_JOINT" type="fixed">
+    <origin xyz="0 0 -0.26" rpy="0 0 0"/>
+    <parent link="RR_CALF"/><child link="RR_WHEEL"/>
+  </joint>
+
+  <link name="imu_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.01"/>
+      <inertia ixx="6.666667E-07" ixy="0" ixz="0" iyy="6.666667E-07" iyz="0" izz="6.666667E-07"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.02 0.02 0.02"/></geometry>
+      <material name="imu_blue"><color rgba="0.1 0.3 0.8 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.02 0.02 0.02"/></geometry>
+    </collision>
+  </link>
+  <joint name="base_to_imu" type="fixed">
+    <origin xyz="0.0065429535 -0.0050846333 0.016924295" rpy="0 0 0"/>
+    <parent link="base_link"/><child link="imu_link"/>
+  </joint>
+
+  <link name="lidar_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="1.158333E-04" ixy="0" ixz="0" iyy="1.158333E-04" iyz="0" izz="1.25E-04"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.08"/></geometry>
+      <material name="lidar_black"><color rgba="0.05 0.05 0.05 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.08"/></geometry>
+    </collision>
+  </link>
+  <joint name="base_to_lidar" type="fixed">
+    <origin xyz="-0.08 0 0.48" rpy="0 0 0"/>
+    <parent link="base_link"/><child link="lidar_link"/>
+  </joint>
+
+  <gazebo reference="lidar_link">
+    <sensor name="sw01_velodyne" type="ray">
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>900</samples><resolution>1</resolution>
+            <min_angle>-3.141592653589793</min_angle><max_angle>3.141592653589793</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>16</samples><resolution>1</resolution>
+            <min_angle>-0.261799</min_angle><max_angle>0.261799</max_angle>
+          </vertical>
+        </scan>
+        <range><min>0.30</min><max>5.0</max><resolution>0.01</resolution></range>
+        <noise><type>gaussian</type><mean>0.0</mean><stddev>0.01</stddev></noise>
+      </ray>
+      <plugin name="sw01_velodyne_plugin" filename="libgazebo_ros_velodyne_laser.so">
+        <ros><remapping>~/out:=/velodyne_points</remapping></ros>
+        <topicName>/velodyne_points</topicName>
+        <frameName>lidar_link</frameName>
+        <min_range>0.30</min_range><max_range>5.0</max_range>
+        <gaussianNoise>0.01</gaussianNoise>
+        <organize_cloud>true</organize_cloud>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="imu_link">
+    <sensor name="sw01_imu" type="imu">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>200</update_rate>
+      <imu>
+        <angular_velocity>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev></noise></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>0.0017</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>0.0017</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>0.0017</stddev></noise></z>
+        </linear_acceleration>
+      </imu>
+      <plugin name="sw01_imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+        <ros><remapping>~/out:=/imu/data</remapping></ros>
+        <frame_name>body</frame_name>
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="sw01_ground_truth" filename="libgazebo_ros_p3d.so">
+      <ros><remapping>odom:=/ground_truth/odom</remapping></ros>
+      <body_name>base_link</body_name>
+      <frame_name>world</frame_name>
+      <update_rate>50</update_rate>
+      <gaussian_noise>0.0</gaussian_noise>
+    </plugin>
+    <plugin name="sw01_planar_move" filename="libgazebo_ros_planar_move.so">
+      <ros><remapping>cmd_vel:=/cmd_vel</remapping></ros>
+      <command_topic>/cmd_vel</command_topic>
+      <odometry_topic>/unused_planar_odom</odometry_topic>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+      <update_rate>50</update_rate>
+      <publish_odom>false</publish_odom>
+      <publish_odom_tf>false</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+    </plugin>
+  </gazebo>
+</robot>
