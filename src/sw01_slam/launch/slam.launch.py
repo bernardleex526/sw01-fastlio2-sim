@@ -1,3 +1,4 @@
+# SLAM 后端：slam_toolbox（当前激活）。备用 FAST-LIO2 参数见 config/sw01_sim.yaml。
 import os
 
 from ament_index_python.packages import get_package_share_directory

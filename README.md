@@ -152,6 +152,52 @@ P3D 与 Planar Move 都不发布导航 odom/TF。若 `/tf` 的详细 publisher �
 | 起点、world、gui、RViz、0/5/12 s 延时 | 四个 launch 文件 | 迷宫起点和任务启动顺序 |
 | 默认终点 `(12, 12, 0)` | `send_nav_goal.py` | `sw01_maze.world` 终点标记 |
 
+## 环境搭建
+
+| 项 | 要求 |
+|----|------|
+| 操作系统 | Ubuntu 22.04 LTS |
+| ROS 2 | Humble Hawksbill |
+| Gazebo | Classic 11（随 ros-humble-gazebo-ros-pkgs 安装） |
+| 关键 ROS 包 | gazebo_ros, gazebo_plugins, velodyne_gazebo_plugins, slam_toolbox, nav2_bringup |
+
+### 一键安装
+
+```bash
+source /opt/ros/humble/setup.bash
+bash setup.sh
+```
+
+### 手动安装
+
+```bash
+# 安装 Gazebo 和传感器插件
+sudo apt install ros-humble-gazebo-ros-pkgs ros-humble-velodyne-gazebo-plugins
+
+# 安装 SLAM 和导航
+sudo apt install ros-humble-slam-toolbox ros-humble-nav2-bringup
+
+# 安装 rosdep 依赖
+rosdep install --from-paths src --ignore-src -r -y
+
+# 构建
+colcon build --symlink-install
+source install/setup.bash
+```
+
+## SLAM 后端
+
+当前激活后端为 **slam_toolbox**（`src/sw01_slam/launch/slam.launch.py`），提供 2D 占用栅格地图。
+
+`src/sw01_slam/config/sw01_sim.yaml` 为备用 **FAST-LIO2** 后端的仿真参数（LiDAR-Inertial 3D 建图）。
+
+如需切换到 FAST-LIO2 后端：
+1. 在 `slam.launch.py` 中注释掉 slam_toolbox 相关节点，取消注释 fastlio_mapping 节点（若无则参照 FAST-LIO ROS2 分支 launch 文件新增）并指定 `config/sw01_sim.yaml` 为参数文件。
+2. 安装 FAST-LIO2 依赖（`livox_ros_driver2` overlay）：参见 README 中 §5.3 WSL2 前置条件。
+3. FAST-LIO2 输出 `/Odometry` 需 remap 到 `/odom`，并发布 TF 链路 `camera_init → body`；Nav2 需在导航参数中配合调整 `odom_frame`。
+
+> 仓库名中的 "fastlio2" 指原始设计目标（FAST-LIO2 作为主 SLAM）；当前仿真验证路径以 slam_toolbox 为主，便于快速迭代 2D 导航功能。
+
 ## 5. WSL2 前置条件
 
 以下命令是供操作员在自己的环境中执行的安装步骤；本文档不声称这些联网、`apt` 或 `sudo` 命令已在当前会话执行。

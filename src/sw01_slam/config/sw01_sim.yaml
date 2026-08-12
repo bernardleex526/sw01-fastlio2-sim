@@ -1,3 +1,11 @@
+# ============================================================
+# FAST-LIO2 参数文件（备用 SLAM 后端）
+#
+# 当前主 SLAM 后端：slam_toolbox（见 launch/slam.launch.py）
+# 本文件为 FAST-LIO2 的仿真参数，如需切换到 FAST-LIO2 后端，
+# 需在 slam.launch.py 中加载本文件并启动 fastlio_mapping 节点。
+# 详见 README 中"SLAM 后端"章节。
+# ============================================================
 /**:
   ros__parameters:
     use_sim_time: true  # 来源：Gazebo /clock，FAST-LIO2 必须与仿真传感器时间戳同步。
