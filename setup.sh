@@ -10,14 +10,15 @@ set -e
 WORKSPACE_DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "[setup] 工作目录: $WORKSPACE_DIR"
 
-# 1. 安装 ROS 依赖（Gazebo 插件、Velodyne、Nav2、slam_toolbox、FAST-LIO2 依赖）
+# 1. 安装 ROS 依赖（Gazebo 插件、Velodyne、Nav2、slam_toolbox、FAST-LIO2 依赖）。
+# velodyne 仿真插件来自 ros-humble-velodyne-simulator（含 velodyne_description +
+# velodyne_gazebo_plugins）。注意：反斜杠续行块内不能写注释，否则 # 会吞掉后续包名。
 echo "[setup] 安装系统依赖..."
 sudo apt-get update -qq
 sudo apt-get install -y --no-install-recommends \
     ros-humble-gazebo-ros \
     ros-humble-gazebo-ros-pkgs \
     ros-humble-gazebo-plugins \
-    # velodyne Gazebo 插件（来自 ros-humble-velodyne-simulator，含 velodyne_description + velodyne_gazebo_plugins）
     ros-humble-velodyne-simulator \
     ros-humble-nav2-bringup \
     ros-humble-slam-toolbox \
@@ -36,14 +37,16 @@ if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
 fi
 rosdep update
 
-# 3. 在 src/ 内安装所有包的 rosdep 依赖
+# 3. 在 src/ 内安装所有包的 rosdep 依赖。livox_ros_driver2 没有 Humble rosdep 系统键，
+#    而本地 fast_lio 无条件依赖它，必须显式跳过，而不是掩盖未知依赖（见 README §6）。
 echo "[setup] rosdep install..."
 cd "$WORKSPACE_DIR"
-rosdep install --from-paths src --ignore-src -r -y
+rosdep install --from-paths src --ignore-src -r -y --skip-keys livox_ros_driver2
 
-# 4. 构建
+# 4. 构建。--base-paths src 阻止 colcon 从工作空间根递归发现根级 fast_lio2 软链引出的
+#    其他非本任务包。
 echo "[setup] colcon build..."
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+colcon build --symlink-install --base-paths src --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 echo ""
 echo "[setup] 完成！使用前执行："

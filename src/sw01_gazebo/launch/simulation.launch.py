@@ -50,6 +50,8 @@ def generate_launch_description():
         executable="spawn_entity.py",
         output="screen",
         # 来源：任务约定；实体 sw01 从 robot_description 生成，默认起点为 (-12, -12, 0.62)，偏航 0 rad。
+        # -package_to_model 把 mesh 的 package:// URI 转成 model://，由 GazeboRosPaths 依据
+        # sw01_description 的 package.xml 导出自动加入的 GAZEBO_MODEL_PATH 解析，无需手工环境变量。
         arguments=[
             "-entity",
             "sw01",
@@ -63,6 +65,7 @@ def generate_launch_description():
             z,
             "-Y",
             yaw,
+            "-package_to_model",
         ],
     )
 

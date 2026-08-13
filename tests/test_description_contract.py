@@ -163,6 +163,19 @@ def test_velodyne_discards_invalid_rays_before_fast_lio_time_synthesis():
     assert "<organize_cloud>false</organize_cloud>" in xml
 
 
+def test_p3d_publishes_ground_truth_without_publishing_any_tf():
+    """P3D 只输出 /ground_truth/odom 供评估，不发布 odom/TF，保持 TF 唯一发布者契约。"""
+    import xml.etree.ElementTree as ET
+
+    root = parse_xml(URDF)
+    p3d = root.find(".//plugin[@filename='libgazebo_ros_p3d.so']")
+    assert p3d is not None
+    p3d_block = ET.tostring(p3d, encoding="unicode")
+    assert "publish_odom_tf" not in p3d_block
+    assert "publish_tf" not in p3d_block
+    assert "/ground_truth/odom" in p3d_block
+
+
 def test_meshes_match_audited_size_and_sha256():
     assert {path.name for path in MESHES.glob("*.STL")} == set(EXPECTED_MESHES)
     for filename, (expected_size, expected_sha256) in EXPECTED_MESHES.items():

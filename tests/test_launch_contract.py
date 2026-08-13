@@ -57,6 +57,14 @@ def test_simulation_quotes_the_xacro_path_as_one_shell_argument():
     assert isinstance(parts[3], ast.Constant) and parts[3].value == '"'
 
 
+def test_fast_lio_node_name_is_explicitly_pinned_to_local_source():
+    """本地源码为 Node("laser_mapping")；launch 必须显式固定，避免随 executable 名漂移。"""
+    slam = LAUNCHES["slam"].read_text(encoding="utf-8")
+
+    assert 'name="laser_mapping"' in slam
+    assert "fastlio_mapping" in slam
+
+
 def test_runtime_ownership_is_unambiguous():
     """Catches duplicate owners or a disconnected simulation/SLAM/Nav2 graph."""
     simulation = LAUNCHES["simulation"].read_text(encoding="utf-8")

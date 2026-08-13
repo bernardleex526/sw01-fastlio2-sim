@@ -22,8 +22,11 @@ def generate_launch_description():
     fast_lio = Node(
         package="fast_lio",
         executable="fastlio_mapping",
+        name="laser_mapping",
         output="screen",
-        # 来源：sw01_sim.yaml；消费 /velodyne_points 与 /imu/data，发布 camera_init->body、/cloud_registered、/path、/Odometry。
+        # 来源：本地源码 laserMapping.cpp 的 Node("laser_mapping")；显式固定节点名，
+        # 使运行时节点确定为 /laser_mapping，不随 executable 名 fastlio_mapping 变化。
+        # 消费 /velodyne_points 与 /imu/data，发布 camera_init->body、/cloud_registered、/path、/Odometry。
         parameters=[fast_lio_params, {"use_sim_time": use_sim_time}],
     )
 

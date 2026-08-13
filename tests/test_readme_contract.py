@@ -9,7 +9,7 @@ def test_readme_contains_reproducible_install_build_and_launch_commands():
     text = README.read_text(encoding="utf-8")
     required = [
         "ros-humble-gazebo-ros-pkgs",
-        "ros-humble-velodyne-gazebo-plugins",
+        "ros-humble-velodyne-simulator",
         "ros-humble-navigation2",
         "ros-humble-slam-toolbox",
         "ros-humble-pointcloud-to-laserscan",
@@ -84,6 +84,37 @@ def test_readme_limits_colcon_discovery_and_handles_the_external_livox_key():
 
     assert "--skip-keys livox_ros_driver2" in text
     assert "--base-paths src" in text
+
+
+def test_readme_uses_clone_location_independent_workspace_paths():
+    """README 不得硬编码旧工作区路径；命令必须适配任意 clone 位置。"""
+    text = README.read_text(encoding="utf-8")
+
+    assert "/mnt/c/Users/admin/Documents/New project 2/sw01_sim_ws" not in text
+    assert "WS=" in text
+    assert 'cd "$WS"' in text
+    assert "sw01-fastlio2-sim" in text
+
+
+def test_readme_documents_the_three_narrow_gaps_and_the_east_detour():
+    """迷宫文档必须说明三处 1.0 m 窄口不可通行以及东侧绕行通道。"""
+    text = README.read_text(encoding="utf-8")
+
+    assert "三处 1.0 m 窄口" in text
+    for wall in ("wall_h07", "wall_h08", "wall_v01", "wall_v02", "wall_v04", "wall_v05"):
+        assert wall in text
+    assert "东侧绕行" in text
+    assert "0.45 m inflation" in text
+    assert "0.92 m" in text
+
+
+def test_readme_pins_the_fast_lio_node_name():
+    """fast_lio 节点名必须与 launch 显式命名及本地源码一致，不得留歧义。"""
+    text = README.read_text(encoding="utf-8")
+
+    assert "laser_mapping" in text
+    assert 'name="laser_mapping"' in text
+    assert "fastlio_mapping" in text
 
 
 def test_every_goal_command_enables_gazebo_simulation_time():

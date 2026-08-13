@@ -17,5 +17,11 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <!-- Gazebo 资源路径：Humble gzserver.launch.py 的 GazeboRosPaths 读取每个包 share/package.xml 的
+         gazebo_ros 导出，把 ${prefix} 替换为 share 目录并自动加入 GAZEBO_MODEL_PATH/GAZEBO_RESOURCE_PATH。
+         ${prefix}/../ 使 model://sw01_description/meshes/... 能经 GAZEBO_MODEL_PATH 解析，
+         配合 spawn_entity.py 的 -package_to_model，安装后无需用户手工设置任何 Gazebo 环境变量。 -->
+    <gazebo_ros gazebo_model_path="${prefix}/../" />
+    <gazebo_ros gazebo_media_path="${prefix}" />
   </export>
 </package>

@@ -24,6 +24,7 @@ D:\slam\自研\fast-lio2\slam\src\x30\sensing\FAST_LIO
 - 本配置实际启用输出：`/cloud_registered`、`/cloud_registered_body`、`/Odometry`、`/path`；
 - 固定动态 TF：`camera_init -> body`；
 - executable 名不是 `fast_lio`，而是 `fastlio_mapping`；
+- 实际 node 名是 `laser_mapping`（本地源码 `laserMapping.cpp` 中 `LaserMappingNode(...) : Node("laser_mapping")`），本工程 `slam.launch.py` 显式以 `name="laser_mapping"` 固定，避免节点名随 executable 名漂移；
 - 本地 `package.xml` 无条件依赖 `livox_ros_driver2`，所以即使仿真使用 Velodyne，也必须让该包在构建时可发现。
 
 ### 1.2 SW01 模型取舍
@@ -38,6 +39,8 @@ D:\slam\自研\fast-lio2\slam\src\x30\sensing\FAST_LIO
 - IMU：FAST-LIO2 紧耦合状态估计的必要输入，输出 `/imu/data`；
 - P3D：只输出 `/ground_truth/odom` 供评估，不进入定位、建图、控制或 TF；
 - Planar Move：在不引入四足控制器的前提下执行 Nav2 `/cmd_vel`。
+
+Gazebo 模型/资源路径由包导出自动建立，不需要手工 `GAZEBO_MODEL_PATH`：`sw01_description` 与 `sw01_gazebo` 的 `package.xml` 导出 `<gazebo_ros gazebo_model_path="${prefix}/../"/>` 与 `<gazebo_ros gazebo_media_path="${prefix}"/>`，Humble `gzserver.launch.py` 的 `GazeboRosPaths` 会读取并自动追加到 `GAZEBO_MODEL_PATH`/`GAZEBO_RESOURCE_PATH`；`simulation.launch.py` 的 `spawn_entity.py` 带 `-package_to_model`，把 17 个 STL 的 `package://` mesh URI 转为 `model://` 后按上述路径解析。
 
 ### 1.3 数据流
 
@@ -59,7 +62,7 @@ FAST-LIO2 ─ /Odometry, /path, /cloud_registered + camera_init -> body
 `fast_lio2` 和 `src/FAST_LIO` 是在 WSL 中创建的软链，不应提交；`build/`、`install/`、`log/` 也是本地产物并已由仓库 `.gitignore` 排除。
 
 ```text
-sw01_sim_ws/
+sw01-fastlio2-sim/
 ├── README.md
 ├── pytest.ini
 ├── fast_lio2 -> /mnt/d/slam/自研/fast-lio2
@@ -135,7 +138,7 @@ map
 | 变换 | TF 唯一发布者 | 约束 |
 |---|---|---|
 | `map -> camera_init` | slam_toolbox | 不启动 AMCL/map_server |
-| `camera_init -> body` | `fast_lio/fastlio_mapping` | URDF 不定义 `body` link |
+| `camera_init -> body` | `fast_lio/laser_mapping`（executable `fastlio_mapping`） | URDF 不定义 `body` link |
 | `body -> base_link` | `tf2_ros/static_transform_publisher` | 标定 `(-0.0065429535, 0.0050846333, -0.016924295)` |
 | `base_link ->` 传感器/轮足 links | `robot_state_publisher` | fixed joint，通常发布到 `/tf_static` |
 
@@ -170,20 +173,25 @@ bash setup.sh
 
 ### 手动安装
 
+以下命令与 `setup.sh` 的 apt 清单、rosdep 与 colcon 参数完全一致（`setup.sh` 已自动执行全部步骤）：
+
 ```bash
 # 安装 Gazebo 和传感器插件
-sudo apt install ros-humble-gazebo-ros-pkgs ros-humble-velodyne-gazebo-plugins
+sudo apt install ros-humble-gazebo-ros-pkgs ros-humble-velodyne-simulator
 
 # 安装 SLAM 和导航
 sudo apt install ros-humble-slam-toolbox ros-humble-nav2-bringup
 
-# 安装 rosdep 依赖
-rosdep install --from-paths src --ignore-src -r -y
+# 安装 rosdep 依赖（livox_ros_driver2 无 Humble rosdep 键，显式跳过）
+rosdep install --from-paths src --ignore-src -r -y \
+  --skip-keys livox_ros_driver2
 
-# 构建
-colcon build --symlink-install
+# 构建（--base-paths src 防止 colcon 从仓库根递归发现 fast_lio2 软链）
+colcon build --symlink-install --base-paths src
 source install/setup.bash
 ```
+
+> `ros-humble-velodyne-simulator` 是包含 `velodyne_description` 与 `velodyne_gazebo_plugins` 两个 ROS 包的 deb 名；不存在名为 `ros-humble-velodyne-gazebo-plugins` 的 deb 包。
 
 ## SLAM 后端
 
@@ -235,20 +243,24 @@ sudo apt install -y \
   ros-dev-tools \
   build-essential cmake git \
   python3-colcon-common-extensions python3-rosdep python3-pip python3-vcstool \
+  ros-humble-gazebo-ros \
   ros-humble-gazebo-ros-pkgs \
   ros-humble-gazebo-plugins \
-  ros-humble-velodyne-gazebo-plugins \
+  ros-humble-velodyne-simulator \
   ros-humble-navigation2 \
   ros-humble-nav2-bringup \
   ros-humble-slam-toolbox \
   ros-humble-pointcloud-to-laserscan \
   ros-humble-xacro \
   ros-humble-robot-state-publisher \
+  ros-humble-tf2-ros \
   ros-humble-tf2-tools \
   ros-humble-rviz2 \
   libpcl-dev libeigen3-dev libyaml-cpp-dev \
   mesa-utils
 ```
+
+本清单是完整手动安装超集；`setup.sh` 自动安装的核心 apt 包（gazebo-ros/-ros-pkgs/-plugins、velodyne-simulator、nav2-bringup、slam-toolbox、robot-state-publisher、xacro、tf2-ros、rviz2、libpcl-dev、libeigen3-dev、python3-colcon-common-extensions、python3-rosdep）与本清单同名一致。`ros-humble-velodyne-simulator` 提供 `velodyne_description` 与 `velodyne_gazebo_plugins` 两个 ROS 包，不存在 `ros-humble-velodyne-gazebo-plugins` 这个 deb 名。
 
 若 `rosdep` 从未初始化，由操作员执行一次；已经初始化时不要重复 `rosdep init`：
 
@@ -296,10 +308,17 @@ ros2 pkg prefix livox_ros_driver2
 
 ## 6. 创建本地 FAST-LIO2 软链、rosdep 与构建
 
-从 WSL 进入合并后的项目路径。路径含空格和中文，命令中的引号不可省略：
+下面所有命令与你克隆本仓库的位置无关：把 `$WS` 替换为你的克隆路径即可（`setup.sh` 也会从自身位置推导工作目录，不依赖任何硬编码路径）：
 
 ```bash
-cd "/mnt/c/Users/admin/Documents/New project 2/sw01_sim_ws"
+WS=/path/to/your/clone/sw01-fastlio2-sim   # 例如 /home/user/sw01-fastlio2-sim
+cd "$WS"
+```
+
+进入后创建软链。软链目标 `/mnt/d/slam/自研/fast-lio2` 是本地 FAST-LIO2 检出的实际 WSL 路径；如果你的检出在其他位置，把该目标换成你的路径即可。路径含空格和中文时引号不可省略：
+
+```bash
+cd "$WS"
 ln -s "/mnt/d/slam/自研/fast-lio2" "fast_lio2"
 ln -s "../fast_lio2/slam/src/x30/sensing/FAST_LIO" "src/FAST_LIO"
 readlink -f "fast_lio2"
@@ -311,7 +330,7 @@ readlink -f "src/FAST_LIO"
 构建主工作空间：
 
 ```bash
-cd "/mnt/c/Users/admin/Documents/New project 2/sw01_sim_ws"
+cd "$WS"
 source /opt/ros/humble/setup.bash
 source "$HOME/ws_livox/install/setup.bash"
 ros2 pkg prefix livox_ros_driver2
@@ -334,7 +353,7 @@ ros2 pkg prefix sw01_gazebo
 先完成第 6 节构建。在每个终端设置相同环境：
 
 ```bash
-cd "/mnt/c/Users/admin/Documents/New project 2/sw01_sim_ws"
+cd "$WS"
 source /opt/ros/humble/setup.bash
 source "$HOME/ws_livox/install/setup.bash"
 source install/setup.bash
@@ -497,7 +516,7 @@ ros2 lifecycle get /velocity_smoother
 这些 ROS/Gazebo CLI 命令在 WSL 中运行：
 
 ```bash
-cd "/mnt/c/Users/admin/Documents/New project 2/sw01_sim_ws"
+cd "$WS"   # $WS 是你的克隆路径，见第 6 节
 source /opt/ros/humble/setup.bash
 source "$HOME/ws_livox/install/setup.bash"
 source install/setup.bash
@@ -529,7 +548,7 @@ ros2 param get /planner_server use_sim_time
 ros2 param get /smoother_server use_sim_time
 ```
 
-若 Gazebo pause，`/clock` 也会停。节点名以 `ros2 node list` 的实际结果为准；如果 FAST-LIO2 节点名不是 `/laser_mapping`，对实际名称执行 `ros2 param get`。
+若 Gazebo pause，`/clock` 也会停。FAST-LIO2 节点名由 `slam.launch.py` 显式固定为 `/laser_mapping`（与 executable 名 `fastlio_mapping` 不同），因此上面的 `ros2 param get /laser_mapping ...` 无需猜测；如发现不同，说明 launch 或本地源码版本有变。
 
 ### 12.3 话题不匹配
 
@@ -577,6 +596,8 @@ gzserver --verbose src/sw01_gazebo/worlds/sw01_maze.world
 - 没有 `/cmd_vel`：检查 action 是否 accepted、global/local costmap 是否更新、planner/controller 日志。
 - footprint 使用实际外廓八点近似（约 0.92 m × 0.54 m）和 0.45 m inflation。若通道被全部膨胀，先查看 costmap；不能把 footprint 缩到小于真实模型以“穿墙”。
 
+迷宫墙线含三处 1.0 m 窄口（墙中心距，净宽 0.8 m）：`wall_h07`/`wall_h08` 之间（y=4）、`wall_v01`/`wall_v02` 之间（x=-8）、`wall_v04`/`wall_v05` 之间（x=-2）。在 0.45 m inflation 与 0.92 m 足迹下这三处不可通行；全局存在东侧绕行路线，由 `wall_h02` 东端、`wall_v08` 顶端、`wall_h06` 东端、`wall_h11` 东端组成，通道净宽 ≥ 2.1 m（静态测试同时用 0.50 m 与 0.91 m 两种膨胀验证起终点连通，见 `tests/test_world_contract.py`）。若全局规划反复绕进窄口或 costmap 在窄口处出现断点，检查 world 是否被覆盖为 `full_demo.launch.py` 的 `world:=` 参数指向的旧版本。
+
 ### 12.8 WSL GUI / WSLg
 
 - `gazebo` 或 `rviz2` 无窗口：检查 `$DISPLAY`、`$WAYLAND_DISPLAY`、`wsl --version`，更新 WSLg 后执行 `wsl --shutdown` 再进入。
@@ -589,8 +610,10 @@ gzserver --verbose src/sw01_gazebo/worlds/sw01_maze.world
 
 - Python 语法和 pytest 契约通过；
 - XML/YAML 可解析，launch/配置含预期接口；
-- 17 个 STL 的尺寸与 SHA-256 匹配审计清单；
-- 迷宫墙体拓扑和膨胀后 BFS 路径存在；
+- 17 个 STL 的尺寸与 SHA-256 匹配审计清单，且全部以 `package://sw01_description/meshes/` 引用并真实存在；
+- 迷宫墙体拓扑、三处 1.0 m 窄口、东侧绕行通道，以及 0.50 m/0.91 m 两种膨胀后 BFS 路径存在；
+- setup.sh 语义（apt 续行无注释、`--skip-keys livox_ros_driver2`、`--base-paths src`、幂等 rosdep init）；
+- package.xml 导出 `gazebo_model_path`/`gazebo_media_path`，spawn 使用 `-package_to_model`，安装后无需手工 GAZEBO_MODEL_PATH；
 - manifests/CMake 安装规则和直接依赖已声明；
 - 源码静态审计未发现 Gazebo odom/TF 重复发布配置。
 
